@@ -1,2 +1,1 @@
 export const JWT_SECRET=process.env.JWT_SECRET || "";
-export const DATABASE_URL="postgresql://neondb_owner:npg_WRh6U1lHcnEz@ep-holy-lake-ahfzz7b9-pooler.c-3.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
