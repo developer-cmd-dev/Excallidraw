@@ -1,13 +1,24 @@
 import express from 'express';
 import jwt from 'jsonwebtoken'
-import { JWT_SECRET } from './config.js';
+import { JWT_SECRET } from "@repo/backend-common/config.ts";
 import { authMiddleware } from './middleware.js';
-
+import { CreateUserZodSchema } from '@repo/common/types.ts';
 const app = express();
 
 
 
 app.post('/signup',(req,res)=>{
+
+    const body = req.body;
+    const {success}= CreateUserZodSchema.safeParse(body);
+    if(!success){
+        res.json("Invalid input");
+        return;
+    }
+
+
+
+
 
 })
 
