@@ -10,8 +10,10 @@ export const authMiddleware = async(req:Request,res:Response,next:NextFunction)=
         return;
     }
 
+    const extractedToken = token.replace("Bearer ","");
 
-    const payload = jwt.verify(token,JWT_SECRET);
+
+    const payload = jwt.verify(extractedToken,JWT_SECRET);
 
     if(payload){
         //@ts-ignore

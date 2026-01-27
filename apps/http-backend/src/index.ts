@@ -4,9 +4,11 @@ import { JWT_SECRET } from "@repo/backend-common/config.ts";
 import { authMiddleware } from './middleware.js';
 import { CreateUserZodSchema, Room, User } from '@repo/common/types.ts';
 import { prisma } from '@repo/db/prisma.ts';
-import  bycrypt from 'bcrypt';
+import  bycrypt, { hash } from 'bcrypt';
+import bodyparser from 'body-parser'
+import 'dotenv/config'
 const app = express();
-
+app.use(bodyparser.json())
 
 
 app.post('/signup', async (req, res) => {
@@ -14,15 +16,14 @@ app.post('/signup', async (req, res) => {
 
         const body = req.body as User;
         const { success } = CreateUserZodSchema.safeParse(body);
-
         if (!success) {
             res.json("Invalid input");
             return;
         }
 
-        const checkUserExistOrNot = await prisma.user.findFirst({where:{email:body.email}});
+        const checkUserExistOrNot = await prisma.user.findUnique({where:{email:body.email}});
 
-        if(!checkUserExistOrNot){
+        if(checkUserExistOrNot){
             res.status(409).json("User already exist");
             return;
         }
@@ -32,6 +33,7 @@ app.post('/signup', async (req, res) => {
         const response = await prisma.user.create({
             data:{
                 ...body,
+                photo:body.photo??"",
                 password:hashedPassword
             }
         })
@@ -49,7 +51,7 @@ app.post('/signup', async (req, res) => {
 app.post('/signin', async(req, res) => {
     const body = req.body as {email:string,password:string};
     try {
-        const getUserFromDb =await prisma.user.findFirst({
+        const getUserFromDb =await prisma.user.findUnique({
           where:{email:body.email},
 
         });
@@ -64,9 +66,10 @@ app.post('/signin', async(req, res) => {
             return;
         }
 
-        const token = jwt.sign(body.email,JWT_SECRET);
+        const token = jwt.sign({data:body.email},JWT_SECRET,{expiresIn:60*1000});
 
         res.status(200).json({data:{
+            id:getUserFromDb.id,
             email:getUserFromDb.email,
             name:getUserFromDb.name,
             photo:getUserFromDb.photo
@@ -98,4 +101,4 @@ app.post('/room', authMiddleware, async (req, res) => {
 
 
 
-app.listen(3001, () => console.log("Server is running on - ", 3002))
+app.listen(3001, () => console.log("Server is running on - ", 3001))

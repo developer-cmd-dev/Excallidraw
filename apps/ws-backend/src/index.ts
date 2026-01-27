@@ -6,6 +6,7 @@ const wss = new WebSocketServer({
     port:8080
 })
 
+console.log("Websocket is running on 8080")
 
 
 wss.on('connection',(ws,req)=>{

@@ -4,7 +4,6 @@ import z, { parseAsync } from "zod";
 export const CreateUserZodSchema = z.object({
     email:z.email(),
     name:z.string(),
-    photo:z.string(),
     password:z.string(),
 })
 
@@ -23,7 +22,7 @@ export const CreateRoomZodSchema = z.object({
 export interface User{
     email:string;
     name?:string;
-    photo:string;
+    photo?:string|null;
     password:string;
 }
 
