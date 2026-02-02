@@ -66,7 +66,7 @@ app.post('/signin', async(req, res) => {
             return;
         }
 
-        const token = jwt.sign({data:body.email},JWT_SECRET,{expiresIn:60*1000});
+        const token = jwt.sign({userId:getUserFromDb.id},JWT_SECRET,{expiresIn:60*1000});
 
         res.status(200).json({data:{
             id:getUserFromDb.id,
