@@ -8,7 +8,7 @@ export const CreateUserZodSchema = z.object({
 })
 
 export const SignInUserZodSchema = z.object({
-    username:z.string().email(),
+    email:z.string().email(),
     password:z.string()
 
 })
@@ -19,10 +19,9 @@ export const CreateRoomZodSchema = z.object({
 })
 
 
-export interface User{
+export interface SignUpUser{
     email:string;
     name?:string;
-    photo?:string|null;
     password:string;
 }
 
@@ -35,4 +34,10 @@ export interface Room {
 export interface Chat{
     message:string;
     roomId:number;
+}
+
+
+export interface SignInUser{
+    email:string;
+    password:string;
 }

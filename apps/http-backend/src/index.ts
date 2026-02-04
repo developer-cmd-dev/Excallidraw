@@ -2,7 +2,7 @@ import express from 'express';
 import jwt from 'jsonwebtoken'
 import { JWT_SECRET } from "@repo/backend-common/config.ts";
 import { authMiddleware } from './middleware.js';
-import { CreateUserZodSchema, Room, User } from '@repo/common/types.ts';
+import { CreateUserZodSchema, Room, SignUpUser } from '@repo/common/types.ts';
 import { prisma } from '@repo/db/prisma.ts';
 import  bycrypt, { hash } from 'bcrypt';
 import bodyparser from 'body-parser'
@@ -14,7 +14,7 @@ app.use(bodyparser.json())
 app.post('/signup', async (req, res) => {
     try {
 
-        const body = req.body as User;
+        const body = req.body as SignUpUser;
         const { success } = CreateUserZodSchema.safeParse(body);
         if (!success) {
             res.json("Invalid input");
@@ -30,15 +30,14 @@ app.post('/signup', async (req, res) => {
 
         const hashedPassword =await bycrypt.hash(body.password,5);
 
-        const response = await prisma.user.create({
+        await prisma.user.create({
             data:{
                 ...body,
-                photo:body.photo??"",
                 password:hashedPassword
             }
         })
 
-        res.status(200).json(response);
+        res.status(200).json({message:'Signed up sccessfully',data:null});
 
     } catch (error) {
         console.log(error);
@@ -53,6 +52,10 @@ app.post('/signin', async(req, res) => {
     try {
         const getUserFromDb =await prisma.user.findUnique({
           where:{email:body.email},
+          include:{
+            rooms:true,
+            chats:true
+          }
 
         });
         if(!getUserFromDb){
@@ -60,7 +63,8 @@ app.post('/signin', async(req, res) => {
             return;
         }
 
-        const verifyPassword = bycrypt.compare(body.password,getUserFromDb.password);
+        const verifyPassword =await bycrypt.compare(body.password,getUserFromDb.password);
+        console.log(verifyPassword)
         if(!verifyPassword){
             res.status(401).json("Invalid credentials");
             return;
@@ -72,7 +76,8 @@ app.post('/signin', async(req, res) => {
             id:getUserFromDb.id,
             email:getUserFromDb.email,
             name:getUserFromDb.name,
-            photo:getUserFromDb.photo
+            rooms:getUserFromDb.rooms,
+            chats:getUserFromDb.chats
         },
         token:token})
     } catch (error) {
