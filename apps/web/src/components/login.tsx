@@ -3,34 +3,64 @@ import { LogoIcon } from '@/components/logo'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { SignInUser } from '@repo/common/types.ts'
+import { SignInUser, SignInUserZodSchema } from '@repo/common/types.ts'
+import axios, { Axios, AxiosError } from 'axios'
 import Link from 'next/link'
 import { FormEvent, useEffect, useState } from 'react'
 import { toast } from 'sonner'
+import {useLoggedInInfo, useUserInfo} from '../../store/store'
+import { useRouter } from 'next/navigation'
 
 
-interface Props{
-    className?:string;
-    handleData:(data:SignInUser)=>void;
-    error:string|null;
-}
 
-export default function LoginPage({className,handleData,error}:Props) {
 
-    const [email,setEmail]=useState('');
-    const [password,setPassword]=useState('');
 
-    const handleSubmit = (e:FormEvent)=>{
+
+export default function LoginPage() {
+    const BACKEND_URL = process.env.BACKEND_URL as string;
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [loading,setLoading]=useState(false);
+    const {addUserData}=useUserInfo((state)=>state);
+    const setIsLoggedIn=useLoggedInInfo((state)=>state.setIsLoggedIn)
+    const router = useRouter();
+
+
+
+
+
+
+    const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
-        handleData({email,password});
-        
+            setLoading(true)
+            const { success } = SignInUserZodSchema.safeParse({ email, password })
+            if (!success) {
+                toast.error("Invalid Credential Formate");
+                return;
+            }
+            
+
+            axios.post(`http://localhost:3001/signin`, { email, password })
+            .then(response=>{
+                setLoading(false);
+                addUserData(response.data);
+                router.push('/canvas');
+                setIsLoggedIn(true);
+            }).catch(error=>{
+                setLoading(false);
+                if(error.response){
+                    toast.error(error.response.data)
+                }else if(error.request){
+                    console.log(error.reqeust);
+                }else{
+                    toast.error("Something went wrong");
+                }
+            })
+
+       
     }
 
 
-  useEffect(() => {
-    if(error) toast.error(error);
-  }, [error])
-  
 
 
 
@@ -40,7 +70,7 @@ export default function LoginPage({className,handleData,error}:Props) {
                 action=""
                 className="bg-muted m-auto h-fit w-full max-w-sm overflow-hidden rounded-[calc(var(--radius)+.125rem)]  shadow-md shadow-zinc-950/5 dark:[--color-muted:var(--color-zinc-900)]"
                 onSubmit={handleSubmit}
-                >
+            >
                 <div className="bg-card -m-px rounded-[calc(var(--radius)+.125rem)]  p-8 pb-6">
                     <div className="text-center">
                         <Link
@@ -66,7 +96,7 @@ export default function LoginPage({className,handleData,error}:Props) {
                                 name="email"
                                 id="email"
                                 value={email}
-                                onChange={(e)=>setEmail(e.target.value)}
+                                onChange={(e) => setEmail(e.target.value)}
                             />
                         </div>
 
@@ -95,11 +125,11 @@ export default function LoginPage({className,handleData,error}:Props) {
                                 id="pwd"
                                 className="input sz-md variant-mixed"
                                 value={password}
-                                onChange={(e)=>setPassword(e.target.value)}
+                                onChange={(e) => setPassword(e.target.value)}
                             />
                         </div>
 
-                        <Button type='submit' className="w-full hover:bg-blue-200 cursor-pointer">Sign In</Button>
+                        <Button disabled={loading} type='submit' className="w-full hover:bg-blue-200 cursor-pointer">Sign In</Button>
                     </div>
 
                     <div className="my-6 grid grid-cols-[1fr_auto_1fr] items-center gap-3">

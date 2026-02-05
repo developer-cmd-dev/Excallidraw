@@ -5,10 +5,18 @@ import { authMiddleware } from './middleware.js';
 import { CreateUserZodSchema, Room, SignUpUser } from '@repo/common/types.ts';
 import { prisma } from '@repo/db/prisma.ts';
 import  bycrypt, { hash } from 'bcrypt';
-import bodyparser from 'body-parser'
-import 'dotenv/config'
+import bodyparser from 'body-parser';
+import 'dotenv/config';
+import cors from 'cors';
+
+
+
+
+
 const app = express();
 app.use(bodyparser.json())
+app.use(cors())
+
 
 
 app.post('/signup', async (req, res) => {
@@ -64,7 +72,6 @@ app.post('/signin', async(req, res) => {
         }
 
         const verifyPassword =await bycrypt.compare(body.password,getUserFromDb.password);
-        console.log(verifyPassword)
         if(!verifyPassword){
             res.status(401).json("Invalid credentials");
             return;

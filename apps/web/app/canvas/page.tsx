@@ -1,40 +1,39 @@
 "use client"
-import React, { Activity, useEffect, useRef, useState } from 'react'
-import { getShapeType, initDraw } from '../../draw/drawingLogic';
-import { Circle, Diamond, Minus, MoveRight, RectangleHorizontal } from 'lucide-react'
-import Link from 'next/link';
+import React, { Activity, useEffect, useRef, useState, useTransition } from 'react'
+import { Circle, Diamond, Minus, MoveRight, RectangleHorizontal, Section } from 'lucide-react'
+import { initDraw } from '../../draw/drawingLogic';
+import rough from 'roughjs'
+
 function page() {
-
-    const canvasRef = useRef<HTMLCanvasElement>(null);
-    const [innerWidth, setInnerWidth] = useState(0);
-    const [innerHeight, setInnerHeight] = useState(0);
-
+    const canvaRef=useRef<HTMLCanvasElement|null>(null)
     useEffect(() => {
-        const canvas = canvasRef.current;
-        if (!canvas) return;
-        canvas.style.background = 'black'
-        initDraw(canvas);
-        if (typeof window !== 'undefined') {
-            setInnerHeight(window.innerHeight);
-            setInnerWidth(window.innerWidth);
+        if(canvaRef.current){
+            const rc = rough.canvas(canvaRef.current);
+            initDraw(rc,canvaRef.current)
         }
-    }, [canvasRef])
+    }, [canvaRef])
+
+
+ 
+
+    
+
 
 
 
 
     return (
-        <div className='relative h-screen w-full bg-neutral-900 overflow-hidden'>
+        <div className='relative h-screen w-full bg-neutral-900 overflow-hidden flex items-center justify-center'>
 
             {/* menubar */}
-            <div className='absolute p-1 top-5 left-1/2 transform -translate-x-1/2 h-10 w-100 flex items-center justify-center gap-3 rounded-full bg-zinc-900'>
+            <div className='absolute z-10 p-1 top-5 left-1/2 transform -translate-x-1/2 h-10 w-100 flex items-center justify-center gap-3 rounded-full bg-zinc-900'>
 
                 {
                     shape.map((elem) => (
                         <span
-                        title={elem.type}
-                        onClick={()=>getShapeType(elem.type)}
-                        className={ `hover:bg-slate-600 cursor-pointer  h-full w-fit p-1 px-3  flex items-center justify-center text-white rounded-xl`}
+                            title={elem.type}
+                            
+                            className={`hover:bg-slate-600 cursor-pointer  h-full w-fit p-1 px-3  flex items-center justify-center text-white rounded-xl`}
                             key={elem.type}>
                             {elem.icon}
                         </span>
@@ -43,10 +42,7 @@ function page() {
 
             </div>
 
-            <canvas ref={canvasRef} height={innerHeight} width={innerWidth} className='border' />
-
-
-
+            <canvas height={800} width={1800} id='canvas' ref={canvaRef} className=' bg-black rounded-3xl ' />
         </div>
     )
 }
@@ -54,7 +50,7 @@ function page() {
 export default page
 
 
-export type Shapes ='rec'|'circle'|'line'|'diamond'|'arrow'
+export type Shapes = 'rec' | 'circle' | 'line' | 'diamond' | 'arrow'
 
 
 const shape = [

@@ -1,125 +1,74 @@
-import { clear } from "console";
-import { Shapes } from "../app/canvas/page";
+import { RoughCanvas } from "roughjs/bin/canvas";
 
 
-type Shape = {
-    type: 'rec';
-    startX: number;
-    startY: number;
-    width: number;
-    height: number;
-} | {
-    type: 'circle';
-    centerX: number;
-    centerY: number;
-    radius: number;
-    dx:number;
-    dy:number;
 
-}
 
-let shapeType='rec';
-
-export function getShapeType (type:string){
-    console.log(type)
-    shapeType=type;
+type Shape ={
+    type:'rec',
+    startX:number,
+    startY:number,
+    width:number,
+    height:number
 }
 
 
 
-export function initDraw(canvas: HTMLCanvasElement) {
+export function initDraw(rc:RoughCanvas,canvas:HTMLCanvasElement) {
 
+  
+    let isDown =false;
+    let startX=0;
+    let startY=0;
+
+    let shape:Shape[] = []
+   
+
+   canvas.addEventListener('mousedown',(e)=>{
+    isDown=true;
+    startX=e.clientX;
+    startY=e.clientY;
+
+ 
+   })
+
+   canvas.addEventListener('mousemove',(e)=>{
+   if(isDown){
+    const width = e.clientX-startX;
+    const height=e.clientY-startY;
+    clearDraw(canvas,rc,shape)
+    rc.rectangle(startX,startY,width,height,{
+        stroke:'white'
+    })
+   }
+   })
+
+   canvas.addEventListener('mouseup',(e)=>{
+    isDown=false;
+    const width = e.clientX-startX;
+    const height=e.clientY-startY;
+    shape.push({type:'rec',startX,startY,width,height})
+   })
+   
+   
+
+
+}
+
+function clearDraw(canvas:HTMLCanvasElement,rc:RoughCanvas,shape:Shape[]){
     const ctx = canvas.getContext('2d');
+    ctx?.clearRect(0,0,canvas.width,canvas.height)
 
-    if (!ctx) return;
-
-    let clicked = false;
-    let startX = 0;
-    let startY = 0;
-    let existingShape: Shape[] = []
-
-    canvas.addEventListener('mousedown', (e) => {
-        clicked = true;
-        startX = e.clientX;
-        startY = e.clientY;
-    })
-
-    canvas.addEventListener('mousemove', (e) => {
-        if (clicked) {
-            if(shapeType=='rec'){
-                let width = e.clientX - startX;
-                let height = e.clientY - startY;
-                renderExistingShape(existingShape, canvas, ctx);
-                ctx.strokeStyle = 'white';
-                ctx.strokeRect(startX, startY, width, height);
-            }else if(shapeType=='circle'){
-                let dx=e.clientX-startX;
-                let dy=e.clientY-startY;
-                const radius = Math.sqrt(dx * dx + dy * dy);
-                renderExistingShape(existingShape,canvas,ctx)
-                ctx.beginPath();
-                ctx.arc(startX,startY,radius,0,2*Math.PI,false)
-                ctx.stroke();
-
-            }
-           
-
-            
-        }
-    })
-
-    canvas.addEventListener('mouseup', (e) => {
-        clicked = false;
-    if(shapeType=='rec'){
-        let width = e.clientX - startX;
-        let height = e.clientY - startY;
-        existingShape.push({
-            type: 'rec',
-            startX,
-            startY,
-            width,
-            height
+    shape.forEach((elem)=>{
+        rc.rectangle(elem.startX,elem.startY,elem.width,elem.height,{
+            stroke:'white'
         })
-    }else if(shapeType=='circle'){
-        let dx=e.clientX-startX;
-        let dy=e.clientY-startY;
-        const radius = Math.sqrt(dx * dx + dy * dy);
-        existingShape.push({
-            type:'circle',
-            centerX:startX,
-            centerY:startY,
-            dx,
-            dy,
-            radius
-        })
-    }
-    })
-
-
-
-
-
-}
-
-function drawing() {
-
-}
-
-
-
-function renderExistingShape(existingShape: Shape[], canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D) {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
-    existingShape.forEach((shape) => {
-        if (shape.type == 'rec') {
-            ctx.strokeStyle = 'white';
-            ctx.strokeRect(shape.startX, shape.startY, shape.width, shape.height);
-        }else if(shape.type=='circle'){
-            ctx.beginPath();
-            ctx.arc(shape.centerX,shape.centerX,shape.radius,0,2*Math.PI,false);
-            ctx.stroke()
-        }
     })
 }
+
+
+
+
+
+
 
 
