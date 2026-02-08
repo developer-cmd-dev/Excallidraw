@@ -17,7 +17,7 @@ import { useRouter } from 'next/navigation'
 
 
 export default function LoginPage() {
-    const BACKEND_URL = process.env.BACKEND_URL as string;
+    const BACKEND_URL = process.env.NEXT_BACKEND_URL ;
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading,setLoading]=useState(false);
@@ -39,8 +39,8 @@ export default function LoginPage() {
                 return;
             }
             
-
-            axios.post(`http://localhost:3001/signin`, { email, password })
+            console.log(BACKEND_URL)
+            axios.post(`${BACKEND_URL}/signin`, { email, password })
             .then(response=>{
                 setLoading(false);
                 addUserData(response.data);
@@ -49,14 +49,16 @@ export default function LoginPage() {
             }).catch(error=>{
                 setLoading(false);
                 if(error.response){
-                    toast.error(error.response.data)
+                    console.log(error)
                 }else if(error.request){
                     console.log(error.reqeust);
                 }else{
+                    console.log(error)
                     toast.error("Something went wrong");
                 }
             })
 
+            setLoading(false)
        
     }
 

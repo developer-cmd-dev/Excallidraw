@@ -42,3 +42,9 @@ model Chat {
   room    Room   @relation(fields: [roomId], references: [id])
   user    User   @relation(fields: [userId], references: [id])
 }
+
+
+model Canvas {
+
+id        String    @id @default(uuid())
+}

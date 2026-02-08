@@ -1,22 +1,35 @@
 "use client"
-import React, { Activity, useEffect, useRef, useState, useTransition } from 'react'
-import { Circle, Diamond, Minus, MoveRight, RectangleHorizontal, Section } from 'lucide-react'
+import React, {  useEffect, useRef,  } from 'react'
+import { Axis3D, Circle, Diamond, Minus, MoveRight, RectangleHorizontal,  } from 'lucide-react'
 import { handleType, initDraw } from '../../draw/drawingLogic';
 import rough from 'roughjs'
+import { useLoggedInInfo, useUserInfo } from '../../store/store';
+import axios from 'axios';
 
 function page() {
-    const canvaRef=useRef<HTMLCanvasElement|null>(null)
+    const BACKEND_URL=process.env.NEXT_BACKEND_URL;
+    const canvaRef=useRef<HTMLCanvasElement|null>(null);
+    const {isLoggedIn}=useLoggedInInfo((state)=>state)
     useEffect(() => {
         if(canvaRef.current){
             const rc = rough.canvas(canvaRef.current);
             initDraw(rc,canvaRef.current)
         }
+
+
+        (async()=>{
+            if(!isLoggedIn){
+                try {
+                    const getCanvasData =await axios.get(`${BACKEND_URL}/get-canvas`);
+                    console.log(getCanvasData.data)
+                } catch (error) {
+                    console.log(error)
+                }
+            }
+        })()
+
+
     }, [canvaRef])
-
-
- 
-
-    
 
 
 
@@ -42,7 +55,7 @@ function page() {
 
             </div>
 
-            <canvas height={800} width={1800} id='canvas' ref={canvaRef} className=' bg-black rounded-3xl ' />
+            <canvas height={950} width={1900} id='canvas' ref={canvaRef} className=' bg-black rounded-3xl ' />
         </div>
     )
 }

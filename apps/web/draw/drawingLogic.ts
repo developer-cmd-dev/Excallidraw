@@ -9,10 +9,16 @@ type Shape = {
     startY: number,
     width: number,
     height: number
+}|{
+    type:'line';
+    startX:number;
+    startY:number;
+    endX:number;
+    endY:number;
 }
 
 
-let drawType = 'rec';
+let drawType = '';
 
 export function handleType(data: string) {
     drawType = data;
@@ -37,6 +43,7 @@ export function initDraw(rc: RoughCanvas, canvas: HTMLCanvasElement) {
         startY = e.clientY;
 
 
+
     })
 
     canvas.addEventListener('mousemove', (e) => {
@@ -44,16 +51,23 @@ export function initDraw(rc: RoughCanvas, canvas: HTMLCanvasElement) {
             if (drawType == 'rec') {
                 const width = e.clientX - startX;
                 const height = e.clientY - startY;
-                clearDraw(canvas, rc, shape)
+                rePaint(canvas, rc, shape)
                 rc.rectangle(startX, startY, width, height, {
                     stroke: 'white'
                 })
             }else if(drawType=='circle'){
                 const width = e.clientX - startX;
                 const height = e.clientY - startY;
-                clearDraw(canvas, rc, shape)
+                rePaint(canvas, rc, shape)
                 rc.ellipse(startX, startY, width, height, {
                     stroke: 'white'
+                })
+            }else if(drawType=='line'){
+                const endX=e.clientX;
+                const endY=e.clientY;
+                rePaint(canvas,rc,shape)
+                rc.line(startX,startY,endX,endY,{
+                    stroke:'white'
                 })
             }
         }
@@ -66,9 +80,12 @@ export function initDraw(rc: RoughCanvas, canvas: HTMLCanvasElement) {
 
         if(drawType=='rec'){
             shape.push({ type: 'rec', startX, startY, width, height })
-
         }else if(drawType=='circle'){
             shape.push({type:'circle',startX,startY,width,height});
+        }else if(drawType=='line'){
+            const endX=e.clientX;
+            const endY=e.clientY;
+            shape.push({type:'line',startX,startY,endX,endY})
         }
     })
 
@@ -77,7 +94,7 @@ export function initDraw(rc: RoughCanvas, canvas: HTMLCanvasElement) {
 
 }
 
-function clearDraw(canvas: HTMLCanvasElement, rc: RoughCanvas, shape: Shape[]) {
+function rePaint(canvas: HTMLCanvasElement, rc: RoughCanvas, shape: Shape[]) {
     const ctx = canvas.getContext('2d');
     ctx?.clearRect(0, 0, canvas.width, canvas.height)
 
@@ -88,6 +105,10 @@ function clearDraw(canvas: HTMLCanvasElement, rc: RoughCanvas, shape: Shape[]) {
             })
         }else if(elem.type=='circle'){
             rc.ellipse(elem.startX,elem.startY,elem.width,elem.height,{
+                stroke:'white'
+            })
+        }else if(elem.type=='line'){
+            rc.line(elem.startX,elem.startY,elem.endX,elem.endY,{
                 stroke:'white'
             })
         }
