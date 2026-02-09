@@ -2,7 +2,7 @@ import express, { response } from 'express';
 import jwt from 'jsonwebtoken'
 import { JWT_SECRET } from "@repo/backend-common/config.ts";
 import { authMiddleware } from './middleware.js';
-import { AuthUserPayload, CreateUserZodSchema, Room, SignUpUser } from '@repo/common/types.ts';
+import { AuthUserPayload, CreateUserZodSchema, Room, SignInUserZodSchema, SignUpUser } from '@repo/common/types.ts';
 import { prisma } from '@repo/db/prisma.ts';
 import  bycrypt, { hash } from 'bcrypt';
 import bodyparser from 'body-parser';
@@ -90,37 +90,43 @@ app.post('/google-auth',async(req,res)=>{
 })
 
 app.post('/signin', async(req, res) => {
-    const body = req.body as {email:string,password:string};
+    const body = req.body as { email?: string; password?: string };
+
+if (!body.email || !body.password) {
+  return res.status(400).json("Email and password required");
+}
+
     try {
+
         const getUserFromDb =await prisma.user.findUnique({
           where:{email:body.email},
           include:{
             rooms:true,
+            canvas:true,
             chats:true
           }
 
         });
+
+        console.log(getUserFromDb)
+
         if(!getUserFromDb){
             res.status(404).json("User not found");
             return;
         }
         //@ts-ignore
-        const verifyPassword =await bycrypt.compare(body.password,getUserFromDb.password);
+        const verifyPassword =await bycrypt.compare(body.password,getUserFromDb.password||'');
         if(!verifyPassword){
             res.status(401).json("Invalid credentials");
             return;
         }
 
         const token = jwt.sign({userId:getUserFromDb.id,email:getUserFromDb.email},JWT_SECRET,{expiresIn:60*1000});
-
-        res.status(200).json({data:{
-            id:getUserFromDb.id,
-            email:getUserFromDb.email,
-            name:getUserFromDb.name,
-            rooms:getUserFromDb.rooms,
-            chats:getUserFromDb.chats
-        },
-        token:token})
+        const responseData= {
+            ...getUserFromDb,
+            access_token:token,
+        }
+        res.status(200).json(responseData)
     } catch (error) {
         console.log(error);
         res.status(500).json("Something went wrong")
@@ -182,4 +188,10 @@ app.post('/room', authMiddleware, async (req, res) => {
 
 
 
-app.listen(3001, () => console.log("Server is running on - ", 3001))
+app.listen(3001, (error) => {
+    if(error){
+        console.log(error);
+        return;
+    }
+    console.log("Server is running on - ", 3001)
+})

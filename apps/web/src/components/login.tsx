@@ -40,24 +40,18 @@ export default function LoginPage() {
                 return;
             }
             
-            console.log(BACKEND_URL)
-            axios.post(`${BACKEND_URL}/signin`, { email, password })
-            .then(response=>{
-                setLoading(false);
-                addUserData(response.data);
-                router.push('/canvas');
-                setIsLoggedIn(true);
-            }).catch(error=>{
-                setLoading(false);
-                if(error.response){
-                    console.log(error)
-                }else if(error.request){
-                    console.log(error.reqeust);
-                }else{
-                    console.log(error)
-                    toast.error("Something went wrong");
-                }
+
+          const result = await  signIn('credentials',{
+            redirect:false,
+                email,
+                password
             })
+
+            if(result?.error){
+                toast.error(result.error)
+            }
+
+            router.push('/dashboard')
 
             setLoading(false)
        

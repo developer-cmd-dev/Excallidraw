@@ -27,7 +27,7 @@ export default function SignupForm({className}:Props) {
         const {success}=CreateUserZodSchema.safeParse({name,email,password});
 
     if (!success) {
-      toast.error("Invalid credentials format. Please check your email and password.");
+      toast.error("Invalid credentials format.");
     }
 
     const response= await axios.post(`${BACKEND_URL}/signup`,{name,email,password});
