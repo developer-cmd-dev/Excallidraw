@@ -38,6 +38,15 @@ export interface SignUpUser{
     password:string;
 }
 
+export interface Canvas{
+    id:string,
+    name: string,
+    userId: string,
+    drawing:[]
+    createdAt: string,
+    updatedAt: string
+}
+
 
 export interface Room {
     slug:string;

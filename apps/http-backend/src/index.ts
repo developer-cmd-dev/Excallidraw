@@ -114,7 +114,6 @@ if (!body.email || !body.password) {
             res.status(404).json("User not found");
             return;
         }
-        //@ts-ignore
         const verifyPassword =await bycrypt.compare(body.password,getUserFromDb.password||'');
         if(!verifyPassword){
             res.status(401).json("Invalid credentials");
@@ -135,16 +134,24 @@ if (!body.email || !body.password) {
 
 })
 
+app.get('/canvas',authMiddleware, async(req,res)=>{
+    try {
+       const result = await prisma.canvas.findMany({where:{userId:req.userPayload.id},take:10,include:{drawing:true}});
+       res.status(200).json(result)
+    } catch (error) {
+        res.status(500).json("Internal Server error");
+    }
+})
 
-app.post('/blank-page',authMiddleware,async(req,res)=>{
+
+app.post('/blank-canvas',authMiddleware,async(req,res)=>{
  try {
     const {name}=req.body as {name:string};
     if(!name && name.length==0){
         res.status(204).json("Invalid Formate");
         return;
     }
-    // @ts-ignore
-    const userId = req.userId;
+    const userId = req.userPayload.id;
 
    const response = await prisma.canvas.create({
         data:{
@@ -162,6 +169,8 @@ app.post('/blank-page',authMiddleware,async(req,res)=>{
     
  } catch (error) {
     console.log(error);
+    res.status(500).json("Something went wrong");
+    return;
  }
 
 

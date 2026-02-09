@@ -10,7 +10,6 @@ import { handleType } from '../draw/drawingLogic';
 function Canvas() {
     const BACKEND_URL = process.env.NEXT_BACKEND_URL;
     const canvaRef = useRef<HTMLCanvasElement | null>(null);
-    const { data: session, status } = useSession()
     useEffect(() => {
         if (canvaRef.current) {
             const rc = rough.canvas(canvaRef.current);
@@ -30,13 +29,14 @@ function Canvas() {
         })()
 
 
-    }, [canvaRef,session])
+    }, [canvaRef])
 
 
 
 
 
     return (
+        <SessionProvider>
             <div className='relative h-screen w-full bg-neutral-900 overflow-hidden flex items-center justify-center'>
 
                 {/* menubar */}
@@ -59,6 +59,7 @@ function Canvas() {
                 <canvas height={950} width={1900} id='canvas' ref={canvaRef} className=' bg-black rounded-3xl ' />
             </div>
 
+        </SessionProvider>
     )
 }
 

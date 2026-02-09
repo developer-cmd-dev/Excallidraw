@@ -14,44 +14,29 @@ import { Field, FieldGroup } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import axios from "axios"
+import { useSession } from "next-auth/react"
 import { FormEvent, useState } from "react"
 
 interface Props{
     children?:React.ReactNode;
-    type:'blank-page'|'room-workspace'
+    type:'blank-page'|'room-workspace',
+    handleSubmit:(data:string)=>void;
 }
 
 
 
 
-export function DialogBox({children}:Props) {
-    const  BACKEND_URL = process.env.NEXT_BACKEND_URL;
+export function DialogBox({children,handleSubmit}:Props) {
     const [name,setName]=useState('Untitled Project');
-    const [loading,setLoading]=useState(false);
-
-    const handleSubmit = async (e:FormEvent)=>{
-        e.preventDefault();
-        setLoading(true);
-
-        try {
-            const response =await axios.post(`${BACKEND_URL}/blank-page`,{name:name});
-            console.log(response.data)
-            setLoading(false)
-        } catch (error) {
-            
-        }finally{
-            setLoading(false)
-        }
-
-    }
+    const [open,setOpen]=useState(false)
 
 
 
 
   return (
-    <Dialog >
-      <form  onSubmit={handleSubmit}>
-        <DialogTrigger asChild>
+    <Dialog open={open} onOpenChange={()=>setOpen(true)} >
+      <form  >
+        <DialogTrigger   asChild>
           {children}
         </DialogTrigger>
         <DialogContent className="sm:max-w-sm">
@@ -71,7 +56,11 @@ export function DialogBox({children}:Props) {
             <DialogClose asChild>
               <Button variant="outline">Cancel</Button>
             </DialogClose>
-            <Button disabled={loading} type="submit">Save changes</Button>
+            
+            <Button className="cursor-pointer"  type="submit" onClick={()=>{
+              handleSubmit(name);
+              setOpen(false)
+            }}>Save changes</Button>
           </DialogFooter>
         </DialogContent>
       </form>

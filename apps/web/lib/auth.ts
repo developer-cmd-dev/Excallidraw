@@ -85,10 +85,10 @@ export const authOption: NextAuthOptions = {
 
                 token.userData = res.data;
 
-            } else {
+            } else if (account?.provider==='credential') {
                 token.userData = user;
             }
-
+            
             return token;
         },
 
