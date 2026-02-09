@@ -19,6 +19,19 @@ export const CreateRoomZodSchema = z.object({
 })
 
 
+export interface AuthUserPayload{
+    id:string;
+    name:string;
+    email:string;
+    image?:string;
+    password:string|null;
+    access_token:string;
+    rooms:[];
+    canvas:[];
+    createdAt:string;
+    updatedAt:string;
+}
+
 export interface SignUpUser{
     email:string;
     name?:string;

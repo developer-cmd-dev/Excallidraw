@@ -2,7 +2,7 @@ import express, { response } from 'express';
 import jwt from 'jsonwebtoken'
 import { JWT_SECRET } from "@repo/backend-common/config.ts";
 import { authMiddleware } from './middleware.js';
-import { CreateUserZodSchema, Room, SignUpUser } from '@repo/common/types.ts';
+import { AuthUserPayload, CreateUserZodSchema, Room, SignUpUser } from '@repo/common/types.ts';
 import { prisma } from '@repo/db/prisma.ts';
 import  bycrypt, { hash } from 'bcrypt';
 import bodyparser from 'body-parser';

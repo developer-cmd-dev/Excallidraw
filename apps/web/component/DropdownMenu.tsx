@@ -16,22 +16,31 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { AuthUserPayload } from '@repo/common/types.ts'
+import { signOut } from 'next-auth/react'
+
+interface Props{
+  userData:AuthUserPayload
+}
+
+
+
+function DropdownMenuComp({userData}:Props) {
 
 
 
 
 
-function DropdownMenuComp() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
       <div className=' w-3xs h-full flex items-center justify-center gap-4 text-white text-sm'>
       <Avatar size='lg' >
-          <AvatarImage  src="https://github.com/shadcn.png" />
+          <AvatarImage  src={userData.image||""} alt='not found' />
           <AvatarFallback>CN</AvatarFallback>
         </Avatar>
 
-        <h1>Dev Kumar</h1>
+        <h1>{userData.name}</h1>
       </div>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-40" align="start" >
@@ -78,7 +87,7 @@ function DropdownMenuComp() {
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
           <DropdownMenuItem>
-            Log out
+          <Button onClick={()=>signOut({callbackUrl:"/signin"})}>Log out</Button>
             <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
           </DropdownMenuItem>
         </DropdownMenuGroup>

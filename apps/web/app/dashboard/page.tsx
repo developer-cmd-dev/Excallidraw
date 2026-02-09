@@ -1,23 +1,21 @@
 import { Input } from '@/components/ui/input'
-import React from 'react'
 import DropdownMenu from '../../component/DropdownMenu'
-import { Plus, Search } from 'lucide-react'
 import Card from '../../component/Card'
 import { DialogBox } from '../../component/Dialog'
 import { getServerSession } from 'next-auth'
-import { setEngine } from 'crypto'
 import { authOption } from '../../lib/auth'
 import { redirect } from 'next/navigation'
+import { AuthUserPayload } from '@repo/common/types.ts'
 
 async function  page() {
 
 
     const session =await getServerSession(authOption)
-    console.log(session,'this is from dashboard')
-
     if(!session){
         redirect('/signin')
     }
+
+    const userData:AuthUserPayload = session.user as AuthUserPayload;
 
 
     return (
@@ -28,7 +26,6 @@ async function  page() {
 
                 <div className='w-full  h-15 flex items-center justify-center'>
                     <img src="./Logo.png" alt="" className=' w-30 border invert'  />
-                    {/* <p className='border'>InkOS</p> */}
                 </div>
 
                 <div className='w-full flex-1 border-t border-neutral-800'>
@@ -38,7 +35,7 @@ async function  page() {
 
 
                 <div className='w-full h-16 border-t border-neutral-800 flex items-center justify-center hover:bg-neutral-700 cursor-pointer  transition-all ease-in-out delay-3'>
-                    <DropdownMenu />
+                    <DropdownMenu userData={userData} />
                 </div>
             </div>
 
@@ -76,12 +73,6 @@ async function  page() {
                 </div>
 
             </div>
-
-
-
-
-
-
         </div>
     )
 }
