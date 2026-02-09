@@ -9,7 +9,9 @@ import LoginPage from '@/components/login'
 
 
   return (
+    
     <LoginPage />
+    
   )
 }
 

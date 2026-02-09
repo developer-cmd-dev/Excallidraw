@@ -14,11 +14,9 @@ function LandingPage() {
             {/* Navbar */}
             <Navbar />
 
-
             {/* Main */}
-            <Hero />
-
-
+            <Hero/>
+        
             {/* Feature */}
             <Feature />
 

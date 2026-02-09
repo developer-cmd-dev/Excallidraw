@@ -10,16 +10,16 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  
 }
 
 model User {
   id        String   @id @default(uuid())
   email     String   @unique
-  name      String?   
-  password  String
+  name      String?
+  password  String?
   rooms     Room[]
   chats     Chat[]
+  canvas    Canvas[]
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 }
@@ -43,8 +43,21 @@ model Chat {
   user    User   @relation(fields: [userId], references: [id])
 }
 
-
 model Canvas {
+  id        String    @id @default(uuid())
+  name      String
+  drawing   Drawing[]
+  userId    String
+  user      User @relation(fields: [userId],references: [id])
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+}
 
-id        String    @id @default(uuid())
+model Drawing {
+  id          String   @id @default(uuid())
+  drawingData String[]
+  canvasId    String
+  canvas      Canvas   @relation(fields: [canvasId], references: [id])
+   createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
 }

@@ -8,7 +8,7 @@ interface Props{
 
 function Card({className,children}:Props) {
   return (
-    <div className={cn('w-45 h-50 rounded-md',className)}>
+    <div className={cn('w-45 h-50 border rounded-md',className)}>
       {children}
     </div>
   )

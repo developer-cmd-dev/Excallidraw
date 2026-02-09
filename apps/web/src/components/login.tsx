@@ -10,6 +10,7 @@ import { FormEvent, useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import {useLoggedInInfo, useUserInfo} from '../../store/store'
 import { useRouter } from 'next/navigation'
+import { signIn } from 'next-auth/react'
 
 
 
@@ -67,10 +68,10 @@ export default function LoginPage() {
 
 
     return (
-        <section className="flex bg-[#FFFEF7] z-10">
+        <section className="flex bg-background text-foreground rounded-md z-10  ">
             <form
                 action=""
-                className="bg-muted m-auto h-fit w-full max-w-sm overflow-hidden rounded-[calc(var(--radius)+.125rem)]  shadow-md shadow-zinc-950/5 dark:[--color-muted:var(--color-zinc-900)]"
+                className=" m-auto h-fit w-full max-w-sm overflow-hidden rounded-[calc(var(--radius)+.125rem)]  shadow-md shadow-zinc-950/5 "
                 onSubmit={handleSubmit}
             >
                 <div className="bg-card -m-px rounded-[calc(var(--radius)+.125rem)]  p-8 pb-6">
@@ -81,7 +82,7 @@ export default function LoginPage() {
                             className="mx-auto block w-fit">
                             <LogoIcon />
                         </Link>
-                        <h1 className="mb-1 mt-4 text-xl font-semibold">Sign In to Tailark</h1>
+                        <h1 className="mb-1 mt-4 text-xl font-semibold">Sign In to InkOS</h1>
                         <p className="text-sm">Welcome back! Sign in to continue</p>
                     </div>
 
@@ -143,6 +144,7 @@ export default function LoginPage() {
                     <div className="grid grid-cols-2 gap-3">
                         <Button
                             type="button"
+                            onClick={()=>signIn('google',{callbackUrl:'/dashboard'})}
                             variant="outline">
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"

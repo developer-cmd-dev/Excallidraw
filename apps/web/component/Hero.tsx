@@ -2,38 +2,57 @@
 import React, { useState } from 'react'
 import { Zap, Heart, } from 'lucide-react'
 import Link from 'next/link'
+import { Button } from '@/components/ui/button'
+import { useSession } from 'next-auth/react'
+import { authOption } from '../lib/auth'
+import { useRouter } from 'next/navigation'
 function Hero() {
   const [isDrawing, setIsDrawing] = useState(false)
+
+ const {data:session,status}= useSession()
+  const router = useRouter()
+  const handleNavigation = ()=>{
+   if(status==='unauthenticated'){
+    router.push('/signin')
+   }else{
+    router.push('/dashboard')
+   }
+  }
+
+
+
+
   return (
-    <main className="relative z-10 max-w-7xl mx-auto px-6 pt-20 pb-32">
+    <main className="relative z-10 max-w-7xl mx-auto px-6 pt-20 pb-32 font-normal">
       <div className="text-center space-y-8 relative">
         {/* Decorative sketch elements */}
         <div className="absolute -top-10 left-1/4 w-32 h-32 border-2 border-[#fa5252] rounded-full opacity-30 animate-pulse" style={{ animationDuration: '3s' }}></div>
         <div className="absolute top-20 right-1/4 w-24 h-24 border-2 border-[#20c997] opacity-30" style={{ transform: 'rotate(15deg)', animation: 'float 4s ease-in-out infinite' }}></div>
 
         <div className="inline-block">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-[#ffc9c9] rounded-full text-sm font-medium mb-6 transform hover:scale-105 transition-transform">
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-red-500 rounded-full text-sm font-medium mb-6 transform hover:scale-105 transition-transform">
             <Zap className="w-4 h-4" />
             Free & Open Source
           </div>
         </div>
 
-        <h2 className="text-6xl md:text-7xl lg:text-8xl font-black leading-tight tracking-tight" style={{ fontFamily: '"Comic Sans MS", "Virgil", cursive' }}>
+        <h2 className="text-6xl md:text-7xl lg:text-8xl  leading-tight tracking-tight font-normal" >
           <span className="inline-block transform hover:rotate-2 transition-transform cursor-default">Sketching</span>{' '}
           <span className="inline-block text-[#6965db] transform hover:-rotate-2 transition-transform cursor-default">meets</span>
           <br />
           <span className="inline-block transform hover:rotate-1 transition-transform cursor-default">collaboration</span>
         </h2>
 
-        <p className="text-xl md:text-2xl text-[#495057] max-w-3xl mx-auto leading-relaxed" style={{ fontFamily: 'Georgia, serif' }}>
+        <p className="text-xl md:text-2xl text-[#495057] max-w-3xl mx-auto leading-relaxed">
           A virtual whiteboard for sketching hand-drawn like diagrams.
           <br />
           Collaborative and end-to-end encrypted.
         </p>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-8">
-          <Link
-            href={"/canvas"}
+          <Button
+          onClick={handleNavigation}
+            variant={'default'}
             className="group relative px-8 py-4 bg-[#6965db] text-white rounded-2xl text-lg font-bold overflow-hidden transform transition-all duration-300 hover:scale-105 hover:shadow-2xl"
 
           >
@@ -42,7 +61,7 @@ function Hero() {
             {isDrawing && (
               <div className="absolute inset-0 border-4 border-white opacity-50 rounded-2xl animate-ping"></div>
             )}
-          </Link>
+          </Button>
 
 
         </div>
@@ -50,8 +69,8 @@ function Hero() {
 
       {/* Animated Demo Canvas */}
       <div className="mt-24 relative">
-        <div className="bg-white rounded-3xl shadow-2xl p-8 border-4 border-[#dee2e6] transform hover:rotate-1 transition-all duration-500">
-          <div className="aspect-video bg-[#fffef7] rounded-2xl border-2 border-dashed border-[#adb5bd] relative overflow-hidden">
+        <div className="bg-backgroud rounded-3xl shadow-2xl p-8 border-4 border-gray-800 transform hover:rotate-1 transition-all duration-500">
+          <div className="aspect-video bg-gray-800 rounded-2xl border-2 border-dashed border-[#adb5bd] relative overflow-hidden">
             {/* Simulated drawing canvas */}
             <svg className="w-full h-full">
               <defs>

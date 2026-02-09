@@ -2,8 +2,8 @@ import React from 'react'
 import { Pencil,Users,Zap } from 'lucide-react'
 function Feature() {
   return (
-    <section className="relative z-10 max-w-7xl mx-auto px-6 py-24">
-         <h3 className="text-4xl md:text-5xl font-black text-center mb-16" style={{ fontFamily: '"Comic Sans MS", cursive' }}>
+    <section className="relative z-10 max-w-7xl mx-auto px-6 py-24 font-normal">
+         <h3 className="text-4xl md:text-5xl font-black text-center mb-16" >
            Why Excalidraw?
          </h3>
 
@@ -30,7 +30,7 @@ function Feature() {
            ].map((feature, i) => (
              <div
                key={i}
-               className="group bg-white p-8 rounded-3xl border-3 border-[#dee2e6] transform transition-all duration-500 hover:scale-105 hover:shadow-2xl cursor-pointer"
+               className="group bg-background p-8 rounded-3xl border-3 border-gray-800 transform transition-all duration-500 hover:scale-105 hover:shadow-2xl cursor-pointer"
                style={{ animation: `slideUp 0.6s ease-out ${i * 0.1}s both` }}
              >
                <div
@@ -39,7 +39,7 @@ function Feature() {
                >
                  <div className="text-white">{feature.icon}</div>
                </div>
-               <h4 className="text-2xl font-bold mb-3" style={{ fontFamily: 'Georgia, serif' }}>
+               <h4 className="text-2xl font-bold mb-3" >
                  {feature.title}
                </h4>
                <p className="text-[#6c757d] text-lg leading-relaxed">

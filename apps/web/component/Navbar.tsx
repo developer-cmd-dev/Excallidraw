@@ -3,11 +3,12 @@ import { Github,Pencil } from "lucide-react"
 function Navbar() {
   return (
     <header className="relative z-10 px-6  py-6 flex items-center justify-between max-w-7xl mx-auto">
-    <div className="flex items-center gap-3 group cursor-pointer">
-      <div className="w-10 h-10 bg-[#6965db] rounded-xl flex items-center justify-center transform transition-all duration-300 group-hover:rotate-12 group-hover:scale-110">
+    <div className="flex items-center gap-3 group cursor-pointer ">
+      {/* <div className="w-10 h-10 bg-[#6965db] rounded-xl flex items-center justify-center transform transition-all duration-300 group-hover:rotate-12 group-hover:scale-110">
         <Pencil className="w-6 h-6 text-white" />
       </div>
-      <h1 className="text-2xl font-bold tracking-tight" style={{ fontFamily: 'Georgia, serif' }}>Excalidraw</h1>
+      <h1 className="text-2xl font-bold tracking-tight" style={{ fontFamily: 'Georgia, serif' }}>Excalidraw</h1> */}
+      <img src="./Logo.png" className="invert w-30" alt="" />
     </div>
 
     <nav className="hidden md:flex items-center gap-8">

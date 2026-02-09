@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { response } from 'express';
 import jwt from 'jsonwebtoken'
 import { JWT_SECRET } from "@repo/backend-common/config.ts";
 import { authMiddleware } from './middleware.js';
@@ -8,7 +8,7 @@ import  bycrypt, { hash } from 'bcrypt';
 import bodyparser from 'body-parser';
 import 'dotenv/config';
 import cors from 'cors';
-
+import cookieParser from 'cookie-parser'
 
 
 
@@ -16,6 +16,7 @@ import cors from 'cors';
 const app = express();
 app.use(bodyparser.json())
 app.use(cors())
+app.use(cookieParser())
 
 
 
@@ -55,6 +56,39 @@ app.post('/signup', async (req, res) => {
 
 })
 
+app.post('/google-auth',async(req,res)=>{
+    const {name,email }=req.body;
+
+    try {
+        const checkUserExist =await prisma.user.findUnique({where:{email},include:{rooms:true,canvas:true}});
+        if(checkUserExist){
+        const token = jwt.sign({userId:checkUserExist.id,email:checkUserExist.email},JWT_SECRET,{expiresIn:60*1000});
+            const responseData = {
+                ...checkUserExist,
+                access_token:token
+            }
+            res.status(200).json(responseData);
+            return;
+        }
+
+        await prisma.user.create({
+            data:{
+                email,
+                name
+            },
+            include:{
+                rooms:true,
+                
+            }
+        })
+
+        res.status(200).json("User created successfully");
+    } catch (error) {
+        console.log(error);
+        res.status(500).json("Something went wrong") 
+    }
+})
+
 app.post('/signin', async(req, res) => {
     const body = req.body as {email:string,password:string};
     try {
@@ -70,14 +104,14 @@ app.post('/signin', async(req, res) => {
             res.status(404).json("User not found");
             return;
         }
-
+        //@ts-ignore
         const verifyPassword =await bycrypt.compare(body.password,getUserFromDb.password);
         if(!verifyPassword){
             res.status(401).json("Invalid credentials");
             return;
         }
 
-        const token = jwt.sign({userId:getUserFromDb.id},JWT_SECRET,{expiresIn:60*1000});
+        const token = jwt.sign({userId:getUserFromDb.id,email:getUserFromDb.email},JWT_SECRET,{expiresIn:60*1000});
 
         res.status(200).json({data:{
             id:getUserFromDb.id,
@@ -95,6 +129,37 @@ app.post('/signin', async(req, res) => {
 
 })
 
+
+app.post('/blank-page',authMiddleware,async(req,res)=>{
+ try {
+    const {name}=req.body as {name:string};
+    if(!name && name.length==0){
+        res.status(204).json("Invalid Formate");
+        return;
+    }
+    // @ts-ignore
+    const userId = req.userId;
+
+   const response = await prisma.canvas.create({
+        data:{
+            name,
+            userId
+        }
+    })
+
+    if(!response){
+        res.status(500).json("Something went wrong")
+    }
+
+    res.status(200).json(response);
+
+    
+ } catch (error) {
+    console.log(error);
+ }
+
+
+})
 
 
 

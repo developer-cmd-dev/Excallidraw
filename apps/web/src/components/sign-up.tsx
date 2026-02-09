@@ -4,36 +4,55 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
-import { SignUpUser } from '@repo/common/types.ts'
+import { CreateUserZodSchema, SignUpUser } from '@repo/common/types.ts'
 import Link from 'next/link'
 import { FormEvent, useState } from 'react'
-
+import {signIn} from 'next-auth/react'
+import axios from 'axios'
+import { toast } from 'sonner'
+import { useRouter } from 'next/navigation'
 interface Props{
     className?:string;
-    handleData : (data:SignUpUser)=>void;
 }
-export default function SignupForm({className,handleData}:Props) {
-
+export default function SignupForm({className}:Props) {
+    const BACKEND_URL = process.env.NEXT_BACKEND_URL as string;
     const [name,setName]=useState('');
     const [email,setEmail]=useState('');
     const [password,setPassword]=useState('');
+    const router = useRouter()
 
-
-    const handleSubmit = (e:FormEvent)=>{
+    const handleSubmit =async (e:FormEvent)=>{
         e.preventDefault();
 
-        handleData({name,email,password});
+        const {success}=CreateUserZodSchema.safeParse({name,email,password});
+
+    if (!success) {
+      toast.error("Invalid credentials format. Please check your email and password.");
     }
+
+    const response= await axios.post(`${BACKEND_URL}/signup`,{name,email,password});
+    if(response.status){
+      router.push('/signin')
+    }else{
+      console.log('something went wrong')
+    }
+    }
+
+
     
 
 
 
+
+
+
+
     return (
-        <section className={cn("flex  ",className)}>
+        <section className={cn("flex  bg-background text-foreground rounded-md  z-10 ",className)}>
             <form
                 action=""
                 onSubmit={handleSubmit}
-                className="bg-muted m-auto h-fit w-full max-w-sm overflow-hidden rounded-[calc(var(--radius)+.130rem)]  shadow-md shadow-zinc-1000/5 dark:[--color-muted:var(--color-zinc-900)]">
+                className=" bg-none m-auto h-fit w-full max-w-sm overflow-hidden rounded-[calc(var(--radius)+.130rem)]  shadow-md shadow-zinc-1000/5">
                 <div className="bg-card -m-px rounded-[calc(var(--radius)+.125rem)]  p-8 pb-6">
                     <div className="text-center">
                         <Link
@@ -42,7 +61,7 @@ export default function SignupForm({className,handleData}:Props) {
                             className="mx-auto block w-fit">
                             <LogoIcon />
                         </Link>
-                        <h1 className="mb-1 mt-4 text-xl font-semibold">Create a Excalidraw Account</h1>
+                        <h1 className="mb-1 mt-4 text-xl font-semibold">Create a InkOS Account</h1>
                         <p className="text-sm">Welcome! Create an account to get started</p>
                     </div>
 
@@ -119,7 +138,10 @@ export default function SignupForm({className,handleData}:Props) {
                     <div className="grid grid-cols-2 gap-3">
                         <Button
                             type="button"
-                            variant="outline">
+                            variant="outline"
+                            onClick={()=>signIn('google',{callbackUrl:'/dashboard'})}
+                            >
+                            
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"
                                 width="0.98em"
