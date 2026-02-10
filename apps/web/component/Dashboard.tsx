@@ -16,9 +16,8 @@ interface Props {
 }
 
 function Dashboard({ authPayload, canvas }: Props) {
-    const backendUrl = process.env.NEXT_BACKEND_URL
    
-
+console.log(canvas)
 
 
 

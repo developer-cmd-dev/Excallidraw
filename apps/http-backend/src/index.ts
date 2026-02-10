@@ -9,8 +9,7 @@ import bodyparser from 'body-parser';
 import 'dotenv/config';
 import cors from 'cors';
 import cookieParser from 'cookie-parser'
-
-
+import redisClient from '@repo/backend-common/redis.ts'
 
 
 const app = express();
@@ -136,7 +135,7 @@ if (!body.email || !body.password) {
 
 app.get('/canvas',authMiddleware, async(req,res)=>{
     try {
-       const result = await prisma.canvas.findMany({where:{userId:req.userPayload.userId},take:10,include:{drawing:true}});
+       const result = await prisma.canvas.findMany({where:{userId:req.userPayload.userId},take:10});
        res.status(200).json(result)
     } catch (error) {
         res.status(500).json("Internal Server error");
@@ -174,6 +173,32 @@ app.post('/blank-canvas',authMiddleware,async(req,res)=>{
  }
 
 
+})
+
+app.post('/save-drawing',authMiddleware,async(req,res)=>{
+        const body = req.body;
+        try {
+            if(body.canvasId){
+
+                const response = await prisma.canvas.update({
+                    where:{
+                        id:body.canvasId
+                    },
+                    data:{
+                        drawing:{
+                            push:JSON.stringify(body)
+                        }
+                    }
+                })
+
+                console.log(response);
+                res.status(200).json("Ok")
+
+            }
+        } catch (error) {
+            console.log(error)
+            res.status(500).json("Something went wrong")
+        }
 })
 
 

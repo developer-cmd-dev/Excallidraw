@@ -6,7 +6,7 @@ export class Rectangle{
     y:number;
     width:number=0;
     height:number=0;
-    rc:RoughCanvas
+    rc:RoughCanvas;
     constructor(x: number, y: number,rc:RoughCanvas) {
         this.x = x;
         this.y = y;
@@ -21,6 +21,17 @@ export class Rectangle{
 
     renderRectangle(){
        return this.rc.rectangle(this.x,this.y,this.width,this.height,{stroke:'white'});
+    }
+
+   public toJson() {
+        // exclude the rc field from serialization
+        return {
+            type:"rect",
+            x: this.x,
+            y: this.y,
+            width: this.width,
+            height: this.height
+        };
     }
 
 }

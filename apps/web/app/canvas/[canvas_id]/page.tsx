@@ -3,6 +3,7 @@ import Canvas from '../../../component/Canvas'
 import { getServerSession } from 'next-auth'
 import { authOption } from '../../../lib/auth'
 import { redirect } from 'next/navigation';
+import { AuthUserPayload } from '@repo/common/types.ts';
 
  async function page() {
 
@@ -14,8 +15,9 @@ import { redirect } from 'next/navigation';
     }
 
 
+
   return (
-    <Canvas/>
+    <Canvas authData={authData.user as AuthUserPayload}/>
   )
 }
 

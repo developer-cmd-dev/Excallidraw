@@ -2,6 +2,8 @@ import { RoughCanvas } from "roughjs/bin/canvas";
 import { Rectangle } from "./Rectangle";
 import { Ellipse } from "./Ellipse";
 import { Line } from "./Line";
+import axios, { AxiosError } from "axios";
+import { Canvas } from "@repo/common/types.ts";
 
 
 
@@ -11,7 +13,7 @@ export type ShapesType = 'rec' | 'circle' | 'line' | 'diamond' | 'arrow' | ''
 
 
 let drawingType: ShapesType = ''
-
+const backendUrl = process.env.NEXT_BACKEND_URL;
 export function handleType(data: ShapesType) {
     drawingType = data
 }
@@ -19,19 +21,34 @@ export function handleType(data: ShapesType) {
 
 type Shapes = Rectangle | Ellipse | Line
 let shape: Shapes[] = [];
-let canvasObj:HTMLCanvasElement;
-let rcObj:RoughCanvas;
-let redoShapeArray:Shapes[]=[];
+let canvasObj: HTMLCanvasElement;
+let rcObj: RoughCanvas;
+let redoShapeArray: Shapes[] = [];
 
-export function initDraw(rc: RoughCanvas, canvas: HTMLCanvasElement) {
+export function initDraw(rc: RoughCanvas, canvas: HTMLCanvasElement, access_token: string, canvasId: string,drawing:string[]): Shapes[] {
     let rectObj: Rectangle;
     let ellipseObj: Ellipse;
     let lineObj: Line;
     let clicked = false;
-    canvasObj=canvas;
-    rcObj=rc;
+    canvasObj = canvas;
+    rcObj = rc;
+
+    
+    drawing.map((data)=>{
+        const jsonData = JSON.parse(data);
+        if(jsonData){
+            if(jsonData.type==='rect'){
+                console.log(jsonData)
+                const rect = new Rectangle(jsonData.x,jsonData.y,rc);
+                rect.modifyRect(jsonData.width,jsonData.height);
+                shape.push(rect);
+                renderCanvas(0,canvas,rc,shape)
+            }
+        }
+    })
 
     canvas.addEventListener('mousedown', (e) => {
+        redoShapeArray = []
         if (drawingType == 'rec') {
             rectObj = new Rectangle(e.clientX, e.clientY, rc);
             rectObj.renderRectangle();
@@ -47,6 +64,7 @@ export function initDraw(rc: RoughCanvas, canvas: HTMLCanvasElement) {
 
     canvas.addEventListener('mousemove', (e) => {
         if (clicked) {
+
             if (rectObj && drawingType == 'rec') {
                 const width = e.clientX - rectObj.x;
                 const height = e.clientY - rectObj.y;
@@ -77,7 +95,10 @@ export function initDraw(rc: RoughCanvas, canvas: HTMLCanvasElement) {
         }
         clicked = false
         cancleReRendering()
+        saveCanvas(access_token, canvasId);
     })
+
+    return []
 
 
 }
@@ -109,22 +130,49 @@ function cancleReRendering() {
 }
 
 
-export function undo(){
-   const lastElement= shape.pop();
-   if(lastElement){
-    redoShapeArray.push(lastElement);
-   }
-    renderCanvas(0,canvasObj,rcObj,shape)
+export function undo() {
+    const lastElement = shape.pop();
+    if (lastElement) {
+        redoShapeArray.push(lastElement);
+    }
+    renderCanvas(0, canvasObj, rcObj, shape)
 }
 
 
-export function redo(){
+export function redo() {
     const lastElement = redoShapeArray.pop();
-    if(lastElement){
+    if (lastElement) {
         shape.push(lastElement);
     }
-    renderCanvas(0,canvasObj,rcObj,shape)
+    renderCanvas(0, canvasObj, rcObj, shape)
 
+}
+
+
+async function saveCanvas(token: string, canvasId: string) {
+    try {
+        if (shape.length > 0) {
+            const lastElement = shape[shape.length - 1];
+
+            if (lastElement instanceof Rectangle) {
+                axiosOperation(token, canvasId, lastElement.toJson())
+            }
+        }
+    } catch (error) {
+
+    }
+}
+
+
+async function axiosOperation(token: string, canvasId: string, data: object) {
+    try {
+        const response = await axios.post(`${backendUrl}/save-drawing`, { ...data, canvasId: canvasId }, { headers: { Authorization: `Bearer ${token}` } })
+        console.log(response.data)
+    } catch (error) {
+        if (error instanceof AxiosError) {
+            console.log(error.response?.data)
+        }
+    }
 }
 
 

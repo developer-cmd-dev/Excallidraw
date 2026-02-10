@@ -5,16 +5,38 @@ import rough from 'roughjs'
 import axios from 'axios';
 import { initDraw, redo, ShapesType, undo } from '../draw/drawingLogic'
 import { handleType } from '../draw/drawingLogic';
+import { AuthUserPayload } from '@repo/common/types.ts';
+import { useParams } from 'next/navigation';
+import { useCanvasStore } from '../store/store';
 
-function Canvas() {
+
+interface Props{
+    authData:AuthUserPayload
+}
+
+
+
+function Canvas({authData}:Props) {
     const canvaRef = useRef<HTMLCanvasElement | null>(null);
     const [innerHeight, setInnerHeight] = useState(300);
     const [innerWidth, setInnerWidth] = useState(100);
-    const [drawingTabs,setDrawingTabs]=useState(0)
+    const [drawingTabs,setDrawingTabs]=useState(0);
+    const params = useParams();
+    const userId = params.canvas_id;
+    const {canvas}=useCanvasStore((state)=>state)
+
+
     useEffect(() => {
-        if (canvaRef.current) {
+        if (canvaRef.current ) {
             const rc = rough.canvas(canvaRef.current);
-            initDraw(rc, canvaRef.current)
+
+            if(canvas){
+               const findCanvas= canvas.find((data)=>data.id == String(params.canvas_id))
+               if(findCanvas){
+                initDraw(rc, canvaRef.current,authData.access_token,String(userId),findCanvas.drawing);
+               }
+            }
+          
         }
         if (typeof window !== 'undefined') {
             setInnerHeight(window.innerHeight);
@@ -22,7 +44,8 @@ function Canvas() {
         }
 
 
-    }, [canvaRef])
+
+    }, [canvaRef,canvas])
 
 
     const handleKeys = useCallback((event:KeyboardEvent)=>{

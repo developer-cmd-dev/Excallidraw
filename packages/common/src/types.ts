@@ -44,7 +44,7 @@ export interface Canvas{
     id:string,
     name: string,
     userId: string,
-    drawing:[]
+    drawing:string[]
     createdAt: string,
     updatedAt: string
 }

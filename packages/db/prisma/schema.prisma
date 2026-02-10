@@ -46,7 +46,7 @@ model Chat {
 model Canvas {
   id        String    @id @default(uuid())
   name      String
-  drawing   Drawing[]
+  drawing   String[]
   userId    String
   user      User @relation(fields: [userId],references: [id])
   createdAt DateTime  @default(now()) @map("created_at")
@@ -57,7 +57,7 @@ model Drawing {
   id          String   @id @default(uuid())
   drawingData String[]
   canvasId    String
-  canvas      Canvas   @relation(fields: [canvasId], references: [id])
+  // canvas      Canvas   @relation(fields: [canvasId], references: [id])
    createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @updatedAt @map("updated_at")
 }

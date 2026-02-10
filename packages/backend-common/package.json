@@ -3,20 +3,24 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  "type":"module",
-  "exports":{
-    "./config.ts":"./src/config.ts"
+  "type": "module",
+  "exports": {
+    "./config.ts": "./src/config.ts",
+    "./redis.ts":"./src/redis.ts"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "devDependencies": {
-    "@repo/typescript-config": "workspace:*"
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "^22.15.3",
+    "@types/redis": "^4.0.11",
+    "typescript": "^5.9.3"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@types/node": "^22.15.3"
+    "redis": "^5.10.0"
   }
 }
