@@ -1,5 +1,5 @@
 
-import { getServerSession } from 'next-auth'
+import { getServerSession, Session } from 'next-auth'
 import { authOption } from '../../lib/auth'
 import { redirect } from 'next/navigation'
 import { AuthUserPayload, Canvas } from '@repo/common/types.ts'
@@ -11,23 +11,24 @@ const backendUrl = process.env.NEXT_BACKEND_URL;
 async function page() {
 
 
-  const session = await getServerSession(authOption)
+
+  const session = await getServerSession(authOption);
   if (!session) {
     redirect('/signin')
+
   }
 
 
   const userData: AuthUserPayload = session.user as AuthUserPayload;
 
-
-  const canvas = await fetchData(userData.access_token);
+  const canvas:Canvas[] = await fetchData(userData.access_token);
   return (
     <Dashboard canvas={canvas} authPayload={userData} />
   )
+
 }
 
 export default page
-
 
 
 const fetchData = async (token: string): Promise<Canvas[]> => {
@@ -38,9 +39,11 @@ const fetchData = async (token: string): Promise<Canvas[]> => {
     if (error instanceof AxiosError) {
       console.log(error.response?.data)
       throw new Error(error.response?.data)
-    } else {
-      throw new Error("Something went wrong")
+    }else{
+      throw new Error("Something went wrong");
     }
-  }
 
+
+  }
 }
+

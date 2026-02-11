@@ -17,7 +17,6 @@ interface Props {
 
 function Dashboard({ authPayload, canvas }: Props) {
    
-console.log(canvas)
 
 
 

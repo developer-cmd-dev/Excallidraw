@@ -25,7 +25,7 @@ let canvasObj: HTMLCanvasElement;
 let rcObj: RoughCanvas;
 let redoShapeArray: Shapes[] = [];
 
-export function initDraw(rc: RoughCanvas, canvas: HTMLCanvasElement, access_token: string, canvasId: string,drawing:string[]): Shapes[] {
+export function initDraw(rc: RoughCanvas, canvas: HTMLCanvasElement, access_token: string, canvasId: string,drawing?:string[]): Shapes[] {
     let rectObj: Rectangle;
     let ellipseObj: Ellipse;
     let lineObj: Line;
@@ -33,19 +33,20 @@ export function initDraw(rc: RoughCanvas, canvas: HTMLCanvasElement, access_toke
     canvasObj = canvas;
     rcObj = rc;
 
+    console.log('initdraw')
     
-    drawing.map((data)=>{
-        const jsonData = JSON.parse(data);
-        if(jsonData){
-            if(jsonData.type==='rect'){
-                console.log(jsonData)
-                const rect = new Rectangle(jsonData.x,jsonData.y,rc);
-                rect.modifyRect(jsonData.width,jsonData.height);
-                shape.push(rect);
-                renderCanvas(0,canvas,rc,shape)
-            }
-        }
-    })
+    // drawing.map((data)=>{
+    //     const jsonData = JSON.parse(data);
+    //     if(jsonData){
+    //         if(jsonData.type==='rect'){
+    //             console.log(jsonData)
+    //             const rect = new Rectangle(jsonData.x,jsonData.y,rc);
+    //             rect.modifyRect(jsonData.width,jsonData.height);
+    //             shape.push(rect);
+    //             renderCanvas(0,canvas,rc,shape)
+    //         }
+    //     }
+    // })
 
     canvas.addEventListener('mousedown', (e) => {
         redoShapeArray = []
@@ -93,17 +94,17 @@ export function initDraw(rc: RoughCanvas, canvas: HTMLCanvasElement, access_toke
         } else if (lineObj && drawingType == 'line') {
             shape.push(lineObj)
         }
-        clicked = false
-        cancleReRendering()
         saveCanvas(access_token, canvasId);
+        clicked = false
+
     })
+
 
     return []
 
 
 }
 
-let requestId = 0;
 
 function renderCanvas(timestamp: number, canvas?: HTMLCanvasElement, rc?: RoughCanvas, shape?: Shapes[]) {
 
@@ -120,14 +121,10 @@ function renderCanvas(timestamp: number, canvas?: HTMLCanvasElement, rc?: RoughC
             }
         })
     }
-    requestId = requestAnimationFrame(renderCanvas)
 
 }
 
 
-function cancleReRendering() {
-    cancelAnimationFrame(requestId)
-}
 
 
 export function undo() {
@@ -165,15 +162,16 @@ async function saveCanvas(token: string, canvasId: string) {
 
 
 async function axiosOperation(token: string, canvasId: string, data: object) {
-    try {
-        const response = await axios.post(`${backendUrl}/save-drawing`, { ...data, canvasId: canvasId }, { headers: { Authorization: `Bearer ${token}` } })
-        console.log(response.data)
-    } catch (error) {
-        if (error instanceof AxiosError) {
-            console.log(error.response?.data)
-        }
-    }
+    console.log(data)
+    // try {
+    //     const response = await axios.post(`${backendUrl}/save-drawing`, { ...data, canvasId: canvasId }, { headers: { Authorization: `Bearer ${token}` } })
+    //     console.log(response.data)
+    // } catch (error) {
+    //     if (error instanceof AxiosError) {
+    //         console.log(error.response?.data)
+    //     }
+    // }
 }
 
-
+                                                                                                                          
 

@@ -30,12 +30,11 @@ function Canvas({authData}:Props) {
         if (canvaRef.current ) {
             const rc = rough.canvas(canvaRef.current);
 
-            if(canvas){
                const findCanvas= canvas.find((data)=>data.id == String(params.canvas_id))
-               if(findCanvas){
-                initDraw(rc, canvaRef.current,authData.access_token,String(userId),findCanvas.drawing);
-               }
-            }
+             
+
+            initDraw(rc, canvaRef.current,authData.access_token,String(userId));
+
           
         }
         if (typeof window !== 'undefined') {
@@ -43,9 +42,13 @@ function Canvas({authData}:Props) {
             setInnerWidth(window.innerWidth)
         }
 
+        return ()=>{
+            canvaRef.current=null;
+        }
 
 
-    }, [canvaRef,canvas])
+
+    }, [canvaRef])
 
 
     const handleKeys = useCallback((event:KeyboardEvent)=>{
@@ -71,15 +74,15 @@ function Canvas({authData}:Props) {
         }
     },[])
 
-    useEffect(() => {
+    // useEffect(() => {
       
-        if(typeof window!=='undefined'){
-            window.addEventListener('keypress',handleKeys);
-            window.addEventListener('keydown',handleUndoRedo)
-        }
-    }, [handleKeys])
+    //     if(typeof window!=='undefined'){
+    //         window.addEventListener('keypress',handleKeys);
+    //         window.addEventListener('keydown',handleUndoRedo)
+    //     }
+    // }, [handleKeys])
     
-
+// 
 
 
 

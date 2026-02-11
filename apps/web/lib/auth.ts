@@ -18,7 +18,8 @@ interface UserPayload {
 export const authOption: NextAuthOptions = {
     secret: JWT_SECRET,
     session: {
-        strategy: 'jwt'
+        strategy: 'jwt',
+        maxAge:60*1000
     },
     pages: {
         signIn: '/signin'
@@ -46,6 +47,8 @@ export const authOption: NextAuthOptions = {
                     if (error instanceof AxiosError) {
                         console.log(error.response?.data)
                         throw new Error(error.response?.data)
+                    }else{
+                        console.log(error)
                     }
                 }
 

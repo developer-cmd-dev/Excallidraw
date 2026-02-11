@@ -67,3 +67,12 @@ export interface SignInUser{
 }
 
 
+
+export type Drawings={
+    type:'rect',
+    x:number,
+    y:number,
+    width:number,
+    height:number,
+    canvasId:string
+}

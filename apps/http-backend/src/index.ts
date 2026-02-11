@@ -2,7 +2,7 @@ import express, { response } from 'express';
 import jwt from 'jsonwebtoken'
 import { JWT_SECRET } from "@repo/backend-common/config.ts";
 import { authMiddleware } from './middleware.js';
-import { AuthUserPayload, CreateUserZodSchema, Room, SignInUserZodSchema, SignUpUser } from '@repo/common/types.ts';
+import { AuthUserPayload, CreateUserZodSchema, Drawings, Room, SignInUserZodSchema, SignUpUser } from '@repo/common/types.ts';
 import { prisma } from '@repo/db/prisma.ts';
 import  bycrypt, { hash } from 'bcrypt';
 import bodyparser from 'body-parser';
@@ -176,22 +176,36 @@ app.post('/blank-canvas',authMiddleware,async(req,res)=>{
 })
 
 app.post('/save-drawing',authMiddleware,async(req,res)=>{
+    console.log('controller run')
         const body = req.body;
         try {
             if(body.canvasId){
 
-                const response = await prisma.canvas.update({
-                    where:{
-                        id:body.canvasId
-                    },
-                    data:{
-                        drawing:{
-                            push:JSON.stringify(body)
-                        }
-                    }
-                })
+                const cache =await redisClient.get(body.canvasId)
 
-                console.log(response);
+                if(cache){
+                    const jsonData:Drawings[] = JSON.parse(cache);
+                    console.log(jsonData, 'from cache')
+                    return
+                }else{
+                    // const response = await prisma.canvas.update({
+                    //     where:{
+                    //         id:body.canvasId
+                    //     },
+                    //     data:{
+                    //         drawing:{
+                    //             push:JSON.stringify(body)
+                    //         }
+                    //     }
+                    // })
+                    redisClient.set(body.canvasId,JSON.stringify(body));
+                    console.log('saved first time');
+                    
+                }
+
+
+               
+
                 res.status(200).json("Ok")
 
             }
