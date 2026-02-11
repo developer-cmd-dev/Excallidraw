@@ -10,7 +10,7 @@ import 'dotenv/config';
 import cors from 'cors';
 import cookieParser from 'cookie-parser'
 import redisClient from '@repo/backend-common/redis.ts'
-import _ from 'lodash'
+import _, { chain } from 'lodash'
 
 
 const app = express();
@@ -140,8 +140,15 @@ app.post('/signin', async (req, res) => {
 
 app.get('/canvas', authMiddleware, async (req, res) => {
     try {
-        const result = await prisma.canvas.findMany({ where: { userId: req.userPayload.userId }, take: 10 });
-        res.status(200).json(result)
+
+        const cache = await redisClient.get(req.userPayload.userId);
+        if(cache){
+            res.status(200).json(JSON.parse(cache));
+        }else{
+            const result = await prisma.canvas.findMany({ where: { userId: req.userPayload.userId }, take: 10 });
+            redisClient.set(req.userPayload.userId,JSON.stringify(result),{expiration:{type:'EX',value:60}});
+            res.status(200).json(result)
+        }
     } catch (error) {
         res.status(500).json("Internal Server error");
     }
