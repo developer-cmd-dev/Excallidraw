@@ -74,13 +74,13 @@ function Canvas({authData}:Props) {
         }
     },[])
 
-    // useEffect(() => {
+    useEffect(() => {
       
-    //     if(typeof window!=='undefined'){
-    //         window.addEventListener('keypress',handleKeys);
-    //         window.addEventListener('keydown',handleUndoRedo)
-    //     }
-    // }, [handleKeys])
+        if(typeof window!=='undefined'){
+            window.addEventListener('keypress',handleKeys);
+            window.addEventListener('keydown',handleUndoRedo)
+        }
+    }, [handleKeys])
     
 // 
 

@@ -17,7 +17,7 @@ import { AuthUserPayload } from '@repo/common/types.ts';
 
 
   return (
-    <Canvas authData={authData.user as AuthUserPayload}/>
+  <Canvas authData={authData.user as AuthUserPayload}/>
   )
 }
 

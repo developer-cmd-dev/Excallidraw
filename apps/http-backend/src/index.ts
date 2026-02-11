@@ -4,18 +4,23 @@ import { JWT_SECRET } from "@repo/backend-common/config.ts";
 import { authMiddleware } from './middleware.js';
 import { AuthUserPayload, CreateUserZodSchema, Drawings, Room, SignInUserZodSchema, SignUpUser } from '@repo/common/types.ts';
 import { prisma } from '@repo/db/prisma.ts';
-import  bycrypt, { hash } from 'bcrypt';
+import bycrypt, { hash } from 'bcrypt';
 import bodyparser from 'body-parser';
 import 'dotenv/config';
 import cors from 'cors';
 import cookieParser from 'cookie-parser'
 import redisClient from '@repo/backend-common/redis.ts'
+import _ from 'lodash'
 
 
 const app = express();
 app.use(bodyparser.json())
 app.use(cors())
 app.use(cookieParser())
+
+redisClient.on('message', (channel, data) => {
+    console.log(channel, data)
+})
 
 
 
@@ -29,23 +34,23 @@ app.post('/signup', async (req, res) => {
             return;
         }
 
-        const checkUserExistOrNot = await prisma.user.findUnique({where:{email:body.email}});
+        const checkUserExistOrNot = await prisma.user.findUnique({ where: { email: body.email } });
 
-        if(checkUserExistOrNot){
+        if (checkUserExistOrNot) {
             res.status(409).json("User already exist");
             return;
         }
 
-        const hashedPassword =await bycrypt.hash(body.password,5);
+        const hashedPassword = await bycrypt.hash(body.password, 5);
 
         await prisma.user.create({
-            data:{
+            data: {
                 ...body,
-                password:hashedPassword
+                password: hashedPassword
             }
         })
 
-        res.status(200).json({message:'Signed up sccessfully',data:null});
+        res.status(200).json({ message: 'Signed up sccessfully', data: null });
 
     } catch (error) {
         console.log(error);
@@ -55,74 +60,74 @@ app.post('/signup', async (req, res) => {
 
 })
 
-app.post('/google-auth',async(req,res)=>{
-    const {name,email }=req.body;
+app.post('/google-auth', async (req, res) => {
+    const { name, email } = req.body;
 
     try {
-        const checkUserExist =await prisma.user.findUnique({where:{email},include:{rooms:true,canvas:true}});
-        if(checkUserExist){
-        const token = jwt.sign({userId:checkUserExist.id,email:checkUserExist.email},JWT_SECRET,{expiresIn:60*1000});
+        const checkUserExist = await prisma.user.findUnique({ where: { email }, include: { rooms: true, canvas: true } });
+        if (checkUserExist) {
+            const token = jwt.sign({ userId: checkUserExist.id, email: checkUserExist.email }, JWT_SECRET, { expiresIn: 60 * 1000 });
             const responseData = {
                 ...checkUserExist,
-                access_token:token
+                access_token: token
             }
             res.status(200).json(responseData);
             return;
         }
 
         await prisma.user.create({
-            data:{
+            data: {
                 email,
                 name
             },
-            include:{
-                rooms:true,
-                
+            include: {
+                rooms: true,
+
             }
         })
 
         res.status(200).json("User created successfully");
     } catch (error) {
         console.log(error);
-        res.status(500).json("Something went wrong") 
+        res.status(500).json("Something went wrong")
     }
 })
 
-app.post('/signin', async(req, res) => {
+app.post('/signin', async (req, res) => {
     const body = req.body as { email?: string; password?: string };
 
-if (!body.email || !body.password) {
-  return res.status(400).json("Email and password required");
-}
+    if (!body.email || !body.password) {
+        return res.status(400).json("Email and password required");
+    }
 
     try {
 
-        const getUserFromDb =await prisma.user.findUnique({
-          where:{email:body.email},
-          include:{
-            rooms:true,
-            canvas:true,
-            chats:true
-          }
+        const getUserFromDb = await prisma.user.findUnique({
+            where: { email: body.email },
+            include: {
+                rooms: true,
+                canvas: true,
+                chats: true
+            }
 
         });
 
         console.log(getUserFromDb)
 
-        if(!getUserFromDb){
+        if (!getUserFromDb) {
             res.status(404).json("User not found");
             return;
         }
-        const verifyPassword =await bycrypt.compare(body.password,getUserFromDb.password||'');
-        if(!verifyPassword){
+        const verifyPassword = await bycrypt.compare(body.password, getUserFromDb.password || '');
+        if (!verifyPassword) {
             res.status(401).json("Invalid credentials");
             return;
         }
 
-        const token = jwt.sign({userId:getUserFromDb.id,email:getUserFromDb.email},JWT_SECRET,{expiresIn:60*1000});
-        const responseData= {
+        const token = jwt.sign({ userId: getUserFromDb.id, email: getUserFromDb.email }, JWT_SECRET, { expiresIn: 60 * 1000 });
+        const responseData = {
             ...getUserFromDb,
-            access_token:token,
+            access_token: token,
         }
         res.status(200).json(responseData)
     } catch (error) {
@@ -133,88 +138,89 @@ if (!body.email || !body.password) {
 
 })
 
-app.get('/canvas',authMiddleware, async(req,res)=>{
+app.get('/canvas', authMiddleware, async (req, res) => {
     try {
-       const result = await prisma.canvas.findMany({where:{userId:req.userPayload.userId},take:10});
-       res.status(200).json(result)
+        const result = await prisma.canvas.findMany({ where: { userId: req.userPayload.userId }, take: 10 });
+        res.status(200).json(result)
     } catch (error) {
         res.status(500).json("Internal Server error");
     }
 })
 
 
-app.post('/blank-canvas',authMiddleware,async(req,res)=>{
- try {
-    const {name}=req.body as {name:string};
-    if(!name && name.length==0){
-        res.status(204).json("Invalid Formate");
-        return;
-    }
-    const userId = req.userPayload.userId;
-
-   const response = await prisma.canvas.create({
-        data:{
-            name,
-            userId
+app.post('/blank-canvas', authMiddleware, async (req, res) => {
+    try {
+        const { name } = req.body as { name: string };
+        if (!name && name.length == 0) {
+            res.status(204).json("Invalid Formate");
+            return;
         }
-    })
+        const userId = req.userPayload.userId;
 
-    if(!response){
-        res.status(500).json("Something went wrong")
-    }
-
-    res.status(200).json(response);
-
-    
- } catch (error) {
-    console.log(error);
-    res.status(500).json("Something went wrong");
-    return;
- }
-
-
-})
-
-app.post('/save-drawing',authMiddleware,async(req,res)=>{
-    console.log('controller run')
-        const body = req.body;
-        try {
-            if(body.canvasId){
-
-                const cache =await redisClient.get(body.canvasId)
-
-                if(cache){
-                    const jsonData:Drawings[] = JSON.parse(cache);
-                    console.log(jsonData, 'from cache')
-                    return
-                }else{
-                    // const response = await prisma.canvas.update({
-                    //     where:{
-                    //         id:body.canvasId
-                    //     },
-                    //     data:{
-                    //         drawing:{
-                    //             push:JSON.stringify(body)
-                    //         }
-                    //     }
-                    // })
-                    redisClient.set(body.canvasId,JSON.stringify(body));
-                    console.log('saved first time');
-                    
-                }
-
-
-               
-
-                res.status(200).json("Ok")
-
+        const response = await prisma.canvas.create({
+            data: {
+                name,
+                userId
             }
-        } catch (error) {
-            console.log(error)
+        })
+
+        if (!response) {
             res.status(500).json("Something went wrong")
         }
+
+        res.status(200).json(response);
+
+
+    } catch (error) {
+        console.log(error);
+        res.status(500).json("Something went wrong");
+        return;
+    }
+
+
 })
 
+app.post('/save-drawing', authMiddleware, async (req, res) => {
+    console.log('controller run')
+    const body = req.body;
+    try {
+        debounce(body)
+
+        if (body.canvasId) {
+             await debounce(body);
+            if(response){
+                res.status(200).json('data saved');
+            }
+
+        }
+    } catch (error) {
+        console.log(error)
+        res.status(500).json("Something went wrong")
+    }
+})
+
+
+async function debounceOperation(body: any) {
+
+    if (body) {
+        const response =  await prisma.canvas.update({
+            where: { id: body.canvasId },
+            data: {
+                drawing: {
+                    push: JSON.stringify(body)
+                }
+            }
+
+        })
+
+        console.log("debouce saved the data")
+
+        return response
+    }
+
+}
+
+const debounce = _.debounce(debounceOperation, 2000)
 
 
 
@@ -223,8 +229,8 @@ app.post('/room', authMiddleware, async (req, res) => {
 
     const body = req.body as Room;
     try {
-     const response = await prisma.room.create({data:body});
-     res.status(200).json(response);
+        const response = await prisma.room.create({ data: body });
+        res.status(200).json(response);
     } catch (error) {
         console.log(error);
         res.status(500).json("Something went wrong");
@@ -237,7 +243,7 @@ app.post('/room', authMiddleware, async (req, res) => {
 
 
 app.listen(3001, (error) => {
-    if(error){
+    if (error) {
         console.log(error);
         return;
     }

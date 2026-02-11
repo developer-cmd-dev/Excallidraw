@@ -33,7 +33,6 @@ export function initDraw(rc: RoughCanvas, canvas: HTMLCanvasElement, access_toke
     canvasObj = canvas;
     rcObj = rc;
 
-    console.log('initdraw')
     
     // drawing.map((data)=>{
     //     const jsonData = JSON.parse(data);
@@ -69,17 +68,17 @@ export function initDraw(rc: RoughCanvas, canvas: HTMLCanvasElement, access_toke
             if (rectObj && drawingType == 'rec') {
                 const width = e.clientX - rectObj.x;
                 const height = e.clientY - rectObj.y;
-                renderCanvas(0, canvas, rc, shape)
+                renderCanvas( canvas, rc, shape)
                 rectObj.modifyRect(width, height)
             } else if (ellipseObj && drawingType == 'circle') {
                 const width = e.clientX - ellipseObj.x;
                 const height = e.clientY - ellipseObj.y;
-                renderCanvas(0, canvas, rc, shape)
+                renderCanvas( canvas, rc, shape)
                 ellipseObj.modifyEllipse(width, height)
             } else if (lineObj && drawingType == 'line') {
                 const x2 = e.clientX;
                 const y2 = e.clientY;
-                renderCanvas(0, canvas, rc, shape);
+                renderCanvas( canvas, rc, shape);
                 lineObj.modifyLine(x2, y2);
             }
         };
@@ -106,7 +105,7 @@ export function initDraw(rc: RoughCanvas, canvas: HTMLCanvasElement, access_toke
 }
 
 
-function renderCanvas(timestamp: number, canvas?: HTMLCanvasElement, rc?: RoughCanvas, shape?: Shapes[]) {
+function renderCanvas( canvas?: HTMLCanvasElement, rc?: RoughCanvas, shape?: Shapes[]) {
 
     const ctx = canvas?.getContext('2d');
     if (canvas && ctx && shape && rc) {
@@ -132,7 +131,7 @@ export function undo() {
     if (lastElement) {
         redoShapeArray.push(lastElement);
     }
-    renderCanvas(0, canvasObj, rcObj, shape)
+    renderCanvas(canvasObj, rcObj, shape)
 }
 
 
@@ -141,7 +140,7 @@ export function redo() {
     if (lastElement) {
         shape.push(lastElement);
     }
-    renderCanvas(0, canvasObj, rcObj, shape)
+    renderCanvas(canvasObj, rcObj, shape)
 
 }
 
@@ -162,15 +161,14 @@ async function saveCanvas(token: string, canvasId: string) {
 
 
 async function axiosOperation(token: string, canvasId: string, data: object) {
-    console.log(data)
-    // try {
-    //     const response = await axios.post(`${backendUrl}/save-drawing`, { ...data, canvasId: canvasId }, { headers: { Authorization: `Bearer ${token}` } })
-    //     console.log(response.data)
-    // } catch (error) {
-    //     if (error instanceof AxiosError) {
-    //         console.log(error.response?.data)
-    //     }
-    // }
+    try {
+        const response = await axios.post(`${backendUrl}/save-drawing`, { ...data, canvasId: canvasId }, { headers: { Authorization: `Bearer ${token}` } })
+        console.log(response.data)
+    } catch (error) {
+        if (error instanceof AxiosError) {
+            console.log(error.response?.data)
+        }
+    }
 }
 
                                                                                                                           
