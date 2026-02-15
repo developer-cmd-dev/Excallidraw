@@ -2,7 +2,7 @@ import express, { response } from 'express';
 import jwt from 'jsonwebtoken'
 import { JWT_SECRET } from "@repo/backend-common/config.ts";
 import { authMiddleware } from './middleware.js';
-import { AuthUserPayload, CreateUserZodSchema, Drawings, Room, SignInUserZodSchema, SignUpUser } from '@repo/common/types.ts';
+import { AuthUserPayload, Canvas, CreateUserZodSchema, Drawings, Room, SignInUserZodSchema, SignUpUser } from '@repo/common/types.ts';
 import { prisma } from '@repo/db/prisma.ts';
 import bycrypt, { hash } from 'bcrypt';
 import bodyparser from 'body-parser';
@@ -10,7 +10,7 @@ import 'dotenv/config';
 import cors from 'cors';
 import cookieParser from 'cookie-parser'
 import redisClient from '@repo/backend-common/redis.ts'
-import _, { chain } from 'lodash'
+import _, { chain, result } from 'lodash'
 
 
 const app = express();
@@ -142,11 +142,12 @@ app.get('/canvas', authMiddleware, async (req, res) => {
     try {
 
         const cache = await redisClient.get(req.userPayload.userId);
-        if(cache){
+        if(cache && cache.length >0){
             res.status(200).json(JSON.parse(cache));
         }else{
+            console.log('request in to the else')
             const result = await prisma.canvas.findMany({ where: { userId: req.userPayload.userId }, take: 10 });
-            redisClient.set(req.userPayload.userId,JSON.stringify(result),{expiration:{type:'EX',value:60}});
+            redisClient.set(req.userPayload.userId,JSON.stringify(result),{expiration:{type:'EX',value:6000}});
             res.status(200).json(result)
         }
     } catch (error) {
@@ -188,7 +189,6 @@ app.post('/blank-canvas', authMiddleware, async (req, res) => {
 })
 
 app.post('/save-drawing', authMiddleware, async (req, res) => {
-    console.log('controller run')
     const body = req.body;
     try {
         debounce(body)
@@ -201,15 +201,53 @@ app.post('/save-drawing', authMiddleware, async (req, res) => {
 
         }
     } catch (error) {
-        console.log(error)
         res.status(500).json("Something went wrong")
     }
+})
+
+
+
+app.get('/get-drawing',async(req,res)=>{
+
+    const canvasId = req.query.canvasId?.toString();
+    
+
+    try {
+            
+    if(!canvasId){
+        res.status(401).json("Invalid Id");
+        return;
+    }
+
+        const cache = await redisClient.get(canvasId);
+        if(cache){
+            res.status(200).json(JSON.parse(cache));
+            return;
+        }
+        const result =await prisma.canvas.findUnique({where:{id:canvasId}});
+        if(!result){
+            res.status(404).json("Drawing not found");
+            return
+        }
+
+
+        redisClient.set(canvasId,JSON.stringify(result));
+        res.status(200).json(result);
+
+    } catch (error) {
+        res.status(500).json('Internal server error');
+    }
+
+
+
+
 })
 
 
 async function debounceOperation(body: any) {
 
     if (body) {
+        redisClient.del(body.canvasId);
         const response =  await prisma.canvas.update({
             where: { id: body.canvasId },
             data: {
@@ -220,14 +258,15 @@ async function debounceOperation(body: any) {
 
         })
 
-        console.log("debouce saved the data")
-
-        return response
+        if(response){
+            redisClient.set(response.id,JSON.stringify(response));
+        }
+                                                                                 
     }
 
 }
 
-const debounce = _.debounce(debounceOperation, 2000)
+const debounce = _.debounce(debounceOperation, 1000)
 
 
 
@@ -235,13 +274,13 @@ const debounce = _.debounce(debounceOperation, 2000)
 app.post('/room', authMiddleware, async (req, res) => {
 
     const body = req.body as Room;
-    try {
-        const response = await prisma.room.create({ data: body });
-        res.status(200).json(response);
-    } catch (error) {
-        console.log(error);
-        res.status(500).json("Something went wrong");
-    }
+    // try {
+    //     const response = await prisma.room.create({ data: body });
+    //     res.status(200).json(response);
+    // } catch (error) {
+    //     console.log(error);
+    //     res.status(500).json("Something went wrong");
+    // }
 
 
 })

@@ -46,7 +46,7 @@ const useLoggedInInfo = create<LoggedInInfo>((set) => (
 
 
 interface CanvasStoreType {
-    canvas: Canvas[],
+    canvasData: Canvas[],
     addCanvas: (canvas: Canvas[] | Canvas) => void;
     removeCanvas: (canvas_id: string) => void;
 }
@@ -56,23 +56,23 @@ interface CanvasStoreType {
 
 const useCanvasStore = create<CanvasStoreType>()(persist(
     (set) => ({
-        canvas: [],
+        canvasData: [],
 
         addCanvas: (data: Canvas[] | Canvas) => {
             if (Array.isArray(data)) {
                 set(() => ({
-                    canvas: data,
+                    canvasData: data,
                 }));
             } else {
                 set((state) => ({
-                    canvas: [...state.canvas, data],
+                    canvasData: [...state.canvasData, data],
                 }));
             }
         },
 
         removeCanvas: (id: string) => {
             set((state) => ({
-                canvas: state.canvas.filter((item) => item.id !== id),
+                canvasData: state.canvasData.filter((item) => item.id !== id),
             }));
         },
     }),

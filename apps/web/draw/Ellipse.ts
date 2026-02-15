@@ -26,6 +26,7 @@ export class Ellipse{
 
      toJson(){
         return{
+            type:"circle",
             x:this.x,
             y:this.y,
             width:this.width,

@@ -1,93 +1,118 @@
 "use client"
 import React, { useCallback, useEffect, useRef, useState, } from 'react'
-import {  Circle, Diamond, Minus, MoveRight, RectangleHorizontal, } from 'lucide-react'
+import { Circle, Diamond, Minus, MoveRight, RectangleHorizontal, } from 'lucide-react'
 import rough from 'roughjs'
-import axios from 'axios';
-import { initDraw, redo, ShapesType, undo } from '../draw/drawingLogic'
+import axios, { Axios, AxiosError } from 'axios';
+import { initDraw, redo, renderExistingCanvas, ShapesType, undo } from '../draw/drawingLogic'
 import { handleType } from '../draw/drawingLogic';
 import { AuthUserPayload } from '@repo/common/types.ts';
 import { useParams } from 'next/navigation';
 import { useCanvasStore } from '../store/store';
+import { toast } from 'sonner';
+import { Spinner } from '@/components/ui/spinner';
 
 
-interface Props{
-    authData:AuthUserPayload
+interface Props {
+    authData: AuthUserPayload
 }
 
 
 
-function Canvas({authData}:Props) {
+function Canvas({ authData }: Props) {
+    const backendUrl= process.env.NEXT_BACKEND_URL;
     const canvaRef = useRef<HTMLCanvasElement | null>(null);
     const [innerHeight, setInnerHeight] = useState(300);
     const [innerWidth, setInnerWidth] = useState(100);
-    const [drawingTabs,setDrawingTabs]=useState(0);
+    const [drawingTabs, setDrawingTabs] = useState(0);
     const params = useParams();
     const userId = params.canvas_id;
-    const {canvas}=useCanvasStore((state)=>state)
-
-
+    const { canvasData } = useCanvasStore((state) => state)
+    const [loading,setLoading]=useState(false)
     useEffect(() => {
-        if (canvaRef.current ) {
+        if(!canvaRef.current)return;
             const rc = rough.canvas(canvaRef.current);
-
-               const findCanvas= canvas.find((data)=>data.id == String(params.canvas_id))
-             
-
-            initDraw(rc, canvaRef.current,authData.access_token,String(userId));
-
-          
+        try {
+            initDraw(rc, canvaRef.current, authData.access_token, String(userId));
+            
+        } catch (error) {
+            if(error instanceof AxiosError){
+                console.log(error.response?.data)
+            }
         }
         if (typeof window !== 'undefined') {
             setInnerHeight(window.innerHeight);
             setInnerWidth(window.innerWidth)
         }
 
-        return ()=>{
-            canvaRef.current=null;
-        }
-
-
 
     }, [canvaRef])
 
 
-    const handleKeys = useCallback((event:KeyboardEvent)=>{
+
+    useEffect(()=>{
+
+        (async()=>{
+
+            try {
+                setLoading(true)
+                if(canvasData && canvasData.length>0){
+                    const response=await  axios.get(`${backendUrl}/get-drawing/?canvasId=${canvasData[0].id}`);
+                    renderExistingCanvas(response.data.drawing);
+                }
+                setLoading(false)
+            } catch (error) {
+                setLoading(false)
+                if(error instanceof AxiosError){
+                    toast.message(error.response?.data);
+                }
+            }finally{
+                setLoading(false)
+            }
+
+        })()
+
+
+    },[canvasData])
+
+
+    const handleKeys = useCallback((event: KeyboardEvent) => {
         const key = Number(event.key);
-        if(key>=1 && key<=5){
+        if (key >= 1 && key <= 5) {
             setDrawingTabs(key)
-            const getType = shape.find((elem)=>elem.keyBind==key);
-            if(getType){
+            const getType = shape.find((elem) => elem.keyBind == key);
+            if (getType) {
                 handleType(getType?.type)
             }
         }
-    },[])
+    }, [])
 
-    const handleUndoRedo = useCallback((e:KeyboardEvent)=>{
+    const handleUndoRedo = useCallback((e: KeyboardEvent) => {
         const isCtrlKeyPressed = e.ctrlKey;
 
-        const isZkeyPressed = e.key=='z';
-        const isYkeyPressed=e.key=='y';
-        if(isCtrlKeyPressed && isZkeyPressed){
-        undo()
-        }else if(isCtrlKeyPressed && isYkeyPressed){
+        const isZkeyPressed = e.key == 'z';
+        const isYkeyPressed = e.key == 'y';
+        if (isCtrlKeyPressed && isZkeyPressed) {
+            undo()
+        } else if (isCtrlKeyPressed && isYkeyPressed) {
             redo()
         }
-    },[])
+    }, [])
 
     useEffect(() => {
-      
-        if(typeof window!=='undefined'){
-            window.addEventListener('keypress',handleKeys);
-            window.addEventListener('keydown',handleUndoRedo)
+
+        if (typeof window !== 'undefined') {
+            window.addEventListener('keypress', handleKeys);
+            window.addEventListener('keydown', handleUndoRedo)
         }
     }, [handleKeys])
-    
-// 
+
+    // 
 
 
 
 
     return (
+        
         <div className='relative h-screen w-full bg-neutral-900 overflow-hidden flex items-center justify-center'>
 
             {/* menubar */}
@@ -104,10 +129,10 @@ function Canvas({authData}:Props) {
                             className={` relative hover:bg-slate-500 cursor-pointer  h-full w-fit p-2 px-4  flex items-center justify-center text-white rounded-xl`}
                             key={elem.type}
                             style={{
-                                backgroundColor: drawingTabs == elem.keyBind ? "#64748b":""
+                                backgroundColor: drawingTabs == elem.keyBind ? "#64748b" : ""
                             }}
-                            
-                            >
+
+                        >
                             {elem.icon}
                             <p className='text-[12px] absolute bottom-0 right-2'>{elem.keyBind}</p>
                         </span>
@@ -117,6 +142,9 @@ function Canvas({authData}:Props) {
             </div>
 
             <div className='border w-full h-full flex-1  flex items-center justify-center'>
+
+                {/* {!loading ? <canvas height={innerHeight} width={innerWidth} id='canvas' ref={canvaRef} className=' bg-black ' />:<Spinner/>} */}
+
                 <canvas height={innerHeight} width={innerWidth} id='canvas' ref={canvaRef} className=' bg-black ' />
             </div>
 
@@ -127,45 +155,45 @@ function Canvas({authData}:Props) {
 
 export default Canvas
 
-interface TabsType{
-    type:ShapesType;
-    active:boolean;
-    icon:React.ReactNode;
-    keyBind:number;
+interface TabsType {
+    type: ShapesType;
+    active: boolean;
+    icon: React.ReactNode;
+    keyBind: number;
 }
 
 
 
-const shape:TabsType[] = [
+const shape: TabsType[] = [
     {
         type: 'rec',
         active: false,
         icon: <RectangleHorizontal />,
-        keyBind:1
+        keyBind: 1
     },
     {
         type: 'circle',
         active: false,
         icon: <Circle />,
-        keyBind:2
+        keyBind: 2
     },
     {
         type: 'line',
         active: false,
         icon: <Minus />,
-        keyBind:3
+        keyBind: 3
     },
     {
         type: "diamond",
         active: false,
         icon: <Diamond />,
-        keyBind:4
+        keyBind: 4
     },
     {
         type: "arrow",
         active: false,
         icon: <MoveRight />,
-        keyBind:5
+        keyBind: 5
     },
 
 ]

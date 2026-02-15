@@ -21,9 +21,9 @@ async function page() {
 
   const userData: AuthUserPayload = session.user as AuthUserPayload;
 
-  const canvas:Canvas[] = await fetchData(userData.access_token);
+  const canvasData:Canvas[] = await fetchData(userData.access_token);
   return (
-    <Dashboard canvas={canvas} authPayload={userData} />
+    <Dashboard canvas={canvasData} authPayload={userData} />
   )
 
 }

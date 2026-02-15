@@ -25,27 +25,13 @@ let canvasObj: HTMLCanvasElement;
 let rcObj: RoughCanvas;
 let redoShapeArray: Shapes[] = [];
 
-export function initDraw(rc: RoughCanvas, canvas: HTMLCanvasElement, access_token: string, canvasId: string,drawing?:string[]): Shapes[] {
+export function initDraw(rc: RoughCanvas, canvas: HTMLCanvasElement, access_token: string, canvasId: string, drawing?: string[]): Shapes[] {
     let rectObj: Rectangle;
     let ellipseObj: Ellipse;
     let lineObj: Line;
     let clicked = false;
     canvasObj = canvas;
     rcObj = rc;
-
-    
-    // drawing.map((data)=>{
-    //     const jsonData = JSON.parse(data);
-    //     if(jsonData){
-    //         if(jsonData.type==='rect'){
-    //             console.log(jsonData)
-    //             const rect = new Rectangle(jsonData.x,jsonData.y,rc);
-    //             rect.modifyRect(jsonData.width,jsonData.height);
-    //             shape.push(rect);
-    //             renderCanvas(0,canvas,rc,shape)
-    //         }
-    //     }
-    // })
 
     canvas.addEventListener('mousedown', (e) => {
         redoShapeArray = []
@@ -68,17 +54,17 @@ export function initDraw(rc: RoughCanvas, canvas: HTMLCanvasElement, access_toke
             if (rectObj && drawingType == 'rec') {
                 const width = e.clientX - rectObj.x;
                 const height = e.clientY - rectObj.y;
-                renderCanvas( canvas, rc, shape)
+                renderCanvas(canvas, rc, shape)
                 rectObj.modifyRect(width, height)
             } else if (ellipseObj && drawingType == 'circle') {
                 const width = e.clientX - ellipseObj.x;
                 const height = e.clientY - ellipseObj.y;
-                renderCanvas( canvas, rc, shape)
+                renderCanvas(canvas, rc, shape)
                 ellipseObj.modifyEllipse(width, height)
             } else if (lineObj && drawingType == 'line') {
                 const x2 = e.clientX;
                 const y2 = e.clientY;
-                renderCanvas( canvas, rc, shape);
+                renderCanvas(canvas, rc, shape);
                 lineObj.modifyLine(x2, y2);
             }
         };
@@ -88,12 +74,17 @@ export function initDraw(rc: RoughCanvas, canvas: HTMLCanvasElement, access_toke
     canvas.addEventListener('mouseup', (e) => {
         if (rectObj && drawingType == 'rec') {
             shape.push(rectObj)
+        saveCanvas(access_token, canvasId);
+
         } else if (ellipseObj && drawingType == 'circle') {
             shape.push(ellipseObj)
+        saveCanvas(access_token, canvasId);
+
         } else if (lineObj && drawingType == 'line') {
             shape.push(lineObj)
-        }
         saveCanvas(access_token, canvasId);
+
+        }
         clicked = false
 
     })
@@ -105,11 +96,34 @@ export function initDraw(rc: RoughCanvas, canvas: HTMLCanvasElement, access_toke
 }
 
 
-function renderCanvas( canvas?: HTMLCanvasElement, rc?: RoughCanvas, shape?: Shapes[]) {
+export function renderExistingCanvas(savedDrawing: string[]) {
+    shape=[]
+    savedDrawing.forEach((data) => {
+        const drawingData = JSON.parse(data);
+        if (drawingData.type === 'rect') {
+            const rectangle = new Rectangle(drawingData.x, drawingData.y, rcObj);
+            rectangle.modifyRect(drawingData.width, drawingData.height);
+            shape.push(rectangle)
+        }else if(drawingData.type ==='circle'){
+            const ellipse = new Ellipse(drawingData.x,drawingData.y,rcObj);
+            ellipse.modifyEllipse(drawingData.width,drawingData.height);
+            shape.push(ellipse)
+        }else if(drawingData.type ==='line'){
+            const line = new Line(drawingData.x1,drawingData.y1,drawingData.x2,drawingData.y2,rcObj);
+            shape.push(line)
+        }
+    })
+    renderCanvas(canvasObj, rcObj, shape)
+    
+
+}
+
+
+function renderCanvas(canvas?: HTMLCanvasElement, rc?: RoughCanvas, shape?: Shapes[]) {
 
     const ctx = canvas?.getContext('2d');
     if (canvas && ctx && shape && rc) {
-        ctx?.clearRect(0, 0, canvas?.width, canvas?.height)
+        ctx.clearRect(0, 0, canvas?.width, canvas?.height)
         shape.map((data) => {
             if (data instanceof Rectangle) {
                 data.renderRectangle()
@@ -152,10 +166,14 @@ async function saveCanvas(token: string, canvasId: string) {
 
             if (lastElement instanceof Rectangle) {
                 axiosOperation(token, canvasId, lastElement.toJson())
+            }else if(lastElement instanceof Ellipse){
+                axiosOperation(token,canvasId,lastElement.toJson())
+            }else if(lastElement instanceof Line){
+                axiosOperation(token,canvasId,lastElement.toJson())
             }
         }
     } catch (error) {
-
+       return error
     }
 }
 
@@ -165,11 +183,9 @@ async function axiosOperation(token: string, canvasId: string, data: object) {
         const response = await axios.post(`${backendUrl}/save-drawing`, { ...data, canvasId: canvasId }, { headers: { Authorization: `Bearer ${token}` } })
         console.log(response.data)
     } catch (error) {
-        if (error instanceof AxiosError) {
-            console.log(error.response?.data)
-        }
+        return error
     }
 }
 
-                                                                                                                          
+
 
