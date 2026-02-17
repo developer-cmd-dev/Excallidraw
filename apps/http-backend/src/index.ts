@@ -107,7 +107,6 @@ app.post('/signin', async (req, res) => {
             include: {
                 rooms: true,
                 canvas: true,
-                chats: true
             }
 
         });
@@ -142,11 +141,11 @@ app.get('/canvas', authMiddleware, async (req, res) => {
     try {
 
         const cache = await redisClient.get(req.userPayload.userId);
-        if(cache && JSON.parse(cache).length >0){
+        if (cache && JSON.parse(cache).length > 0) {
             res.status(200).json(JSON.parse(cache));
-        }else{
+        } else {
             const result = await prisma.canvas.findMany({ where: { userId: req.userPayload.userId }, take: 10 });
-            redisClient.set(req.userPayload.userId,JSON.stringify(result),{expiration:{type:'EX',value:6000}});
+            redisClient.set(req.userPayload.userId, JSON.stringify(result), { expiration: { type: 'EX', value: 6000 } });
             res.status(200).json(result)
         }
     } catch (error) {
@@ -171,7 +170,7 @@ app.post('/blank-canvas', authMiddleware, async (req, res) => {
             }
         })
 
-        redisClient.set(userId,JSON.stringify(response),{expiration:{type:"EX",value:6000}})
+        redisClient.set(userId, JSON.stringify(response), { expiration: { type: "EX", value: 6000 } })
 
         if (!response) {
             res.status(500).json("Something went wrong")
@@ -189,19 +188,19 @@ app.post('/blank-canvas', authMiddleware, async (req, res) => {
 
 })
 
-app.delete('/delete-canvas',authMiddleware, async(req,res)=>{
+app.delete('/delete-canvas', authMiddleware, async (req, res) => {
 
     const canvasId = req.query.canvasId?.toString();
 
-   
+
 
     try {
-        if(!canvasId){
+        if (!canvasId) {
             res.status(400).json("Invalid id");
             return
         }
-       const result =await  prisma.canvas.delete({where:{id:canvasId}});
-      const cacheDel = await redisClient.del(req.userPayload.userId);
+        const result = await prisma.canvas.delete({ where: { id: canvasId } });
+        const cacheDel = await redisClient.del(req.userPayload.userId);
         res.status(200).json('Deleted');
     } catch (error) {
         res.status(500).json("Internal Server Error");
@@ -217,8 +216,8 @@ app.post('/save-drawing', authMiddleware, async (req, res) => {
         debounce(body)
 
         if (body.canvasId) {
-             await debounce(body);
-            if(response){
+            await debounce(body);
+            if (response) {
                 res.status(200).json('data saved');
             }
 
@@ -230,31 +229,31 @@ app.post('/save-drawing', authMiddleware, async (req, res) => {
 
 
 
-app.get('/get-drawing',async(req,res)=>{
+app.get('/get-drawing', async (req, res) => {
 
     const canvasId = req.query.canvasId?.toString();
-    
+
 
     try {
-            
-    if(!canvasId){
-        res.status(401).json("Invalid Id");
-        return;
-    }
+
+        if (!canvasId) {
+            res.status(401).json("Invalid Id");
+            return;
+        }
 
         const cache = await redisClient.get(canvasId);
-        if(cache){
+        if (cache) {
             res.status(200).json(JSON.parse(cache));
             return;
         }
-        const result =await prisma.canvas.findUnique({where:{id:canvasId}});
-        if(!result){
+        const result = await prisma.canvas.findUnique({ where: { id: canvasId } });
+        if (!result) {
             res.status(404).json("Drawing not found");
             return
         }
 
 
-        redisClient.set(canvasId,JSON.stringify(result));
+        redisClient.set(canvasId, JSON.stringify(result));
         res.status(200).json(result);
 
     } catch (error) {
@@ -271,7 +270,7 @@ async function debounceOperation(body: any) {
 
     if (body) {
         redisClient.del(body.canvasId);
-        const response =  await prisma.canvas.update({
+        const response = await prisma.canvas.update({
             where: { id: body.canvasId },
             data: {
                 drawing: {
@@ -281,10 +280,10 @@ async function debounceOperation(body: any) {
 
         })
 
-        if(response){
-            redisClient.set(response.id,JSON.stringify(response));
+        if (response) {
+            redisClient.set(response.id, JSON.stringify(response));
         }
-                                                                                 
+
     }
 
 }
@@ -294,18 +293,61 @@ const debounce = _.debounce(debounceOperation, 1000)
 
 
 
-app.post('/room', authMiddleware, async (req, res) => {
+app.post('/create-room', authMiddleware, async (req, res) => {
 
-    const body = req.body as Room;
-    // try {
-    //     const response = await prisma.room.create({ data: body });
-    //     res.status(200).json(response);
-    // } catch (error) {
-    //     console.log(error);
-    //     res.status(500).json("Something went wrong");
-    // }
+    const body = req.body;
+    if (!body) {
+        res.status(400).json("Bad request");
+    }
+    try {
+
+        const roomCode = Math.floor(Math.random() * 10000);
+
+        const roomResult = await prisma.room.create({
+            data: {
+                name: body.name,
+                roomCode,
+                adminId: req.userPayload.userId,
+            },
+            include:{canvas:true}
+        })
+
+      const canvasResult = await  prisma.canvas.create({
+            data:{
+                name:"room canvas",
+                userId:req.userPayload.userId,
+                roomId:roomResult.roomCode
+            }
+        })
+
+        res.status(200).json({room:roomResult,
+            canvas:canvasResult
+        });
 
 
+    } catch (error) {
+
+        res.status(500).json('Internal Server Error');
+    }
+
+
+})
+
+
+app.get('/get-room',authMiddleware,async(req,res)=>{
+    const roomCode = req.query.roomCode?.toString()
+
+
+    if(!roomCode){
+        res.status(400).json("invalid room code");
+        return
+    }
+    try {
+      const result = await  prisma.room.findUnique({where:{roomCode:Number(roomCode)},include:{canvas:true}});
+      res.status(200).json(result)
+    } catch (error) {
+        res.status(500).json("Internal Server Error");
+    }
 })
 
 

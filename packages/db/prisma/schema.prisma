@@ -18,46 +18,32 @@ model User {
   name      String?
   password  String?
   rooms     Room[]
-  chats     Chat[]
   canvas    Canvas[]
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 }
 
 model Room {
-  id        Int      @id @default(autoincrement())
-  slug      String
+  name      String
   adminId   String
+  roomCode  Int     @id 
   admin     User     @relation(fields: [adminId], references: [id])
-  chats     Chat[]
+  canvas    Canvas[]
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 }
 
-model Chat {
-  id      Int    @id @default(autoincrement())
-  message String
-  roomId  Int
-  userId  String
-  room    Room   @relation(fields: [roomId], references: [id])
-  user    User   @relation(fields: [userId], references: [id])
-}
+
 
 model Canvas {
   id        String    @id @default(uuid())
   name      String
   drawing   String[]
   userId    String
+  roomId    Int?
   user      User @relation(fields: [userId],references: [id])
+  room      Room? @relation(fields: [roomId],references: [roomCode])
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @updatedAt @map("updated_at")
 }
 
-model Drawing {
-  id          String   @id @default(uuid())
-  drawingData String[]
-  canvasId    String
-  // canvas      Canvas   @relation(fields: [canvasId], references: [id])
-   createdAt DateTime  @default(now()) @map("created_at")
-  updatedAt DateTime  @updatedAt @map("updated_at")
-}

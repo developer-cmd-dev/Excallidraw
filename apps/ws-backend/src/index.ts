@@ -3,6 +3,7 @@ import jwt, { JsonWebTokenError, JwtPayload, TokenExpiredError } from 'jsonwebto
 import { JWT_SECRET } from '@repo/backend-common/config.ts';
 import User from './User';
 import Room from './Room';
+import { prisma } from '@repo/db/prisma.ts';
 
 const wss = new WebSocketServer({
     port: 8080
@@ -21,27 +22,42 @@ wss.on('connection', async (ws, req) => {
         return;
     }
 
-    const user:User|null = await authUser(authToken, ws);
+    const user: User | null = await authUser(authToken, ws);
 
-    if(user){
-        let roomObj:Room|null = null;
-        ws.on('message', (data) => {
+    if (user) {
+        let roomObj: Room | null = null;
+        ws.on('message', async (data) => {
             const message = JSON.parse(data.toString());
             if (message.type === 'create-room') {
-                 roomObj = new Room(message.room_id, user);
+                roomObj = new Room(message.room_id, user);
                 roomObj.setUser(ws);
-                rooms.set(message.room_id,roomObj);
+                rooms.set(message.room_id, roomObj);
                 ws.send('room created')
-            }else if(message.type === 'join-room'){
+            } else if (message.type === 'join-room') {
+                try {
+                    const result = await prisma.room.update({
+                        where:{roomCode:Number(message.room_id)},
+                        data:{
+                            adminId:user.userId
+                        }
+                    })
+                    console.log(result)
+                    if (result) {
+                        const getRoom = rooms.get(message.room_id);
+                        getRoom?.setUser(ws);
+                        user.setRoomId(message.room_id);
+                        ws.send('room joined')
+                    }
+
+                } catch (error) {
+                    console.log(error);
+                }
+
+            } else if (message.type === 'message') {
                 const getRoom = rooms.get(message.room_id);
-                getRoom?.setUser(ws);
-                user.setRoomId(message.room_id);
-                ws.send('room joined')
-            }else if(message.type==='message'){
-                const getRoom = rooms.get(message.room_id);
-                if(getRoom){
-                    getRoom.users.forEach((users)=>{
-                        if(users!==ws){
+                if (getRoom) {
+                    getRoom.users.forEach((users) => {
+                        if (users !== ws) {
                             users.send(message.data);
                         }
                     })
@@ -49,19 +65,19 @@ wss.on('connection', async (ws, req) => {
             }
         })
 
-        ws.on('close',()=>{
-           if(roomObj){
-            rooms.delete(roomObj.roomId);
-            console.log(rooms)
-           }else{
-            if(user.roomId){
-                const getRoom = rooms.get(user.roomId);
-                if(getRoom){
-                    getRoom.deleteUser(ws);
-                    console.log(getRoom)
+        ws.on('close', () => {
+            if (roomObj) {
+                rooms.delete(roomObj.roomId);
+                console.log(rooms)
+            } else {
+                if (user.roomId) {
+                    const getRoom = rooms.get(user.roomId);
+                    if (getRoom) {
+                        getRoom.deleteUser(ws);
+                        console.log(getRoom)
+                    }
                 }
             }
-           }
         })
     }
 
@@ -72,7 +88,7 @@ wss.on('connection', async (ws, req) => {
 
 
 
-async function authUser(token: string, ws: WebSocket):Promise<User|null> {
+async function authUser(token: string, ws: WebSocket): Promise<User | null> {
 
 
 
@@ -91,7 +107,7 @@ async function authUser(token: string, ws: WebSocket):Promise<User|null> {
             ws.close()
         }
         return null
-        
+
     }
 
 
