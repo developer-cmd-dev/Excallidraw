@@ -25,14 +25,14 @@ function Canvas({ authData }: Props) {
     const [innerWidth, setInnerWidth] = useState(100);
     const [drawingTabs, setDrawingTabs] = useState(0);
     const params = useParams();
-    const userId = params.canvas_id;
+    const canvasId = params.canvas_id;
     const { canvasData } = useCanvasStore((state) => state)
     const [loading,setLoading]=useState(false)
     useEffect(() => {
         if(!canvaRef.current)return;
             const rc = rough.canvas(canvaRef.current);
         try {
-            initDraw(rc, canvaRef.current, authData.access_token, String(userId));
+            initDraw(rc, canvaRef.current, authData.access_token, String(canvasId));
             
         } catch (error) {
             if(error instanceof AxiosError){
@@ -52,11 +52,10 @@ function Canvas({ authData }: Props) {
     useEffect(()=>{
 
         (async()=>{
-
             try {
                 setLoading(true)
-                if(canvasData && canvasData.length>0){
-                    const response=await  axios.get(`${backendUrl}/get-drawing/?canvasId=${canvasData[0].id}`);
+                if(canvasId){
+                    const response=await  axios.get(`${backendUrl}/get-drawing/?canvasId=${canvasId}`);
                     renderExistingCanvas(response.data.drawing);
                 }
                 setLoading(false)

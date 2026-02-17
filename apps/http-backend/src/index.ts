@@ -142,10 +142,9 @@ app.get('/canvas', authMiddleware, async (req, res) => {
     try {
 
         const cache = await redisClient.get(req.userPayload.userId);
-        if(cache && cache.length >0){
+        if(cache && JSON.parse(cache).length >0){
             res.status(200).json(JSON.parse(cache));
         }else{
-            console.log('request in to the else')
             const result = await prisma.canvas.findMany({ where: { userId: req.userPayload.userId }, take: 10 });
             redisClient.set(req.userPayload.userId,JSON.stringify(result),{expiration:{type:'EX',value:6000}});
             res.status(200).json(result)
@@ -172,6 +171,8 @@ app.post('/blank-canvas', authMiddleware, async (req, res) => {
             }
         })
 
+        redisClient.set(userId,JSON.stringify(response),{expiration:{type:"EX",value:6000}})
+
         if (!response) {
             res.status(500).json("Something went wrong")
         }
@@ -184,6 +185,28 @@ app.post('/blank-canvas', authMiddleware, async (req, res) => {
         res.status(500).json("Something went wrong");
         return;
     }
+
+
+})
+
+app.delete('/delete-canvas',authMiddleware, async(req,res)=>{
+
+    const canvasId = req.query.canvasId?.toString();
+
+   
+
+    try {
+        if(!canvasId){
+            res.status(400).json("Invalid id");
+            return
+        }
+       const result =await  prisma.canvas.delete({where:{id:canvasId}});
+      const cacheDel = await redisClient.del(req.userPayload.userId);
+        res.status(200).json('Deleted');
+    } catch (error) {
+        res.status(500).json("Internal Server Error");
+    }
+
 
 
 })

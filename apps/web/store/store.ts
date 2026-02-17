@@ -1,7 +1,5 @@
 import { Canvas } from "@repo/common/types.ts";
-import { UUID } from "crypto";
 import { create, createStore } from "zustand";
-import { persist, createJSONStorage } from 'zustand/middleware'
 
 type UserInfo = {
     name: string;
@@ -54,33 +52,22 @@ interface CanvasStoreType {
 
 
 
-const useCanvasStore = create<CanvasStoreType>()(persist(
-    (set) => ({
-        canvasData: [],
-
-        addCanvas: (data: Canvas[] | Canvas) => {
-            if (Array.isArray(data)) {
-                set(() => ({
-                    canvasData: data,
-                }));
-            } else {
-                set((state) => ({
-                    canvasData: [...state.canvasData, data],
-                }));
-            }
-        },
-
-        removeCanvas: (id: string) => {
-            set((state) => ({
-                canvasData: state.canvasData.filter((item) => item.id !== id),
-            }));
-        },
-    }),
+const useCanvasStore = create<CanvasStoreType>((set)=>(
     {
-        name: "canvas-storage", // key in localStorage
-        storage: createJSONStorage(() => localStorage), // optional but recommended
+        canvasData:[],
+        addCanvas:(data)=>{
+           if(Array.isArray(data)){
+            set((state)=>({
+                canvasData:[...state.canvasData,...data]
+            }))
+           }
+        },
+        removeCanvas:(data)=>{
+            set((state)=>({
+                canvasData:state.canvasData.filter((element)=>element.id!=data)
+            }))
+        }
     }
 ))
-
 
 export { useUserInfo, useLoggedInInfo, useCanvasStore };

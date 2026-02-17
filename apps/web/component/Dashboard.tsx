@@ -71,7 +71,7 @@ function Dashboard({ authPayload, canvas }: Props) {
                     </div>
 
                     {/* Canvas */}
-                    <CreatedCanvas canvases={canvas}/>
+                    <CreatedCanvas authPayload = {authPayload} canvases={canvas}/>
                     
 
                 </div>
