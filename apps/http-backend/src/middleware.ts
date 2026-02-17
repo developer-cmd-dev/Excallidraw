@@ -14,7 +14,7 @@ export const authMiddleware = async(req:Request,res:Response,next:NextFunction)=
 
 
     const extractedToken = token.replace("Bearer ","");
-
+    console.log(extractedToken)
 
    try {
     const payload = jwt.verify(extractedToken,JWT_SECRET);
