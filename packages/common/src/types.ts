@@ -51,14 +51,11 @@ export interface Canvas{
 
 
 export interface Room {
-    slug:string;
-    adminId:string;
+    name:string,
+    adminId:string,
+    roomCode:number,
 }
 
-export interface Chat{
-    message:string;
-    roomId:number;
-}
 
 
 export interface SignInUser{

@@ -9,6 +9,7 @@ import { AuthUserPayload, Canvas } from '@repo/common/types.ts'
 import axios, { Axios, AxiosError } from 'axios'
 import { toast } from 'sonner'
 import CreatedCanvas from './CreatedCanvas'
+import CreateRoomDialog from './CreateRoomDialog'
 
 interface Props {
     authPayload: AuthUserPayload;
@@ -62,12 +63,14 @@ function Dashboard({ authPayload, canvas }: Props) {
                             </Card>
                         </DialogBox>
 
-                        <Card className=' bg-neutral-800 cursor-pointer hover:bg-neutral-700  font-extralight p-2 text-sm h-25 w-40 flex flex-col  items-center justify-center'>
+                    <CreateRoomDialog accessToken={authPayload.access_token}>
+                    <Card className=' bg-neutral-800 cursor-pointer hover:bg-neutral-700  font-extralight p-2 text-sm h-25 w-40 flex flex-col  items-center justify-center'>
                             <div className='w-full h-3/4 flex items-center justify-center'>
                                 <svg xmlns="http://www.w3.org/2000/svg" width="45" height="45" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="0.5" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-users-icon lucide-users"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><path d="M16 3.128a4 4 0 0 1 0 7.744" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><circle cx="9" cy="7" r="4" /></svg>
                             </div>
                             <p>Create and Join Team</p>
                         </Card>
+                    </CreateRoomDialog>
                     </div>
 
                     {/* Canvas */}

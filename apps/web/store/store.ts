@@ -1,4 +1,4 @@
-import { Canvas } from "@repo/common/types.ts";
+import { Canvas, Room } from "@repo/common/types.ts";
 import { create, createStore } from "zustand";
 
 type UserInfo = {
@@ -52,22 +52,49 @@ interface CanvasStoreType {
 
 
 
-const useCanvasStore = create<CanvasStoreType>((set)=>(
+const useCanvasStore = create<CanvasStoreType>((set) => (
     {
-        canvasData:[],
-        addCanvas:(data)=>{
-           if(Array.isArray(data)){
-            set((state)=>({
-                canvasData:[...state.canvasData,...data]
-            }))
-           }
+        canvasData: [],
+        addCanvas: (data) => {
+            if (Array.isArray(data)) {
+                set((state) => ({
+                    canvasData: [...state.canvasData, ...data]
+                }))
+            }
         },
-        removeCanvas:(data)=>{
-            set((state)=>({
-                canvasData:state.canvasData.filter((element)=>element.id!=data)
+        removeCanvas: (data) => {
+            set((state) => ({
+                canvasData: state.canvasData.filter((element) => element.id != data)
             }))
         }
     }
 ))
 
-export { useUserInfo, useLoggedInInfo, useCanvasStore };
+
+type RoomObjType = {
+    room: Room,
+    canvas: Canvas,
+}
+
+interface RoomStoreSchema {
+    roomStoreData: RoomObjType | null;
+
+    setRoomStoreData: (data: RoomObjType) => void;
+
+}
+
+const useRoomStore = create<RoomStoreSchema>((set) => (
+    {
+        roomStoreData: null,
+        setRoomStoreData: (data: RoomObjType) => {
+            set((state) => (
+                {
+                    roomStoreData: data
+                }
+            ))
+        }
+
+    }
+))
+
+export { useUserInfo, useLoggedInInfo, useCanvasStore,useRoomStore };

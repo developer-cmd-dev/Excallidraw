@@ -41,7 +41,6 @@ wss.on('connection', async (ws, req) => {
                             adminId:user.userId
                         }
                     })
-                    console.log(result)
                     if (result) {
                         const getRoom = rooms.get(message.room_id);
                         getRoom?.setUser(ws);
@@ -51,6 +50,7 @@ wss.on('connection', async (ws, req) => {
 
                 } catch (error) {
                     console.log(error);
+                    ws.close()
                 }
 
             } else if (message.type === 'message') {

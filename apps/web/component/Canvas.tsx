@@ -7,7 +7,7 @@ import { initDraw, redo, renderExistingCanvas, ShapesType, undo } from '../draw/
 import { handleType } from '../draw/drawingLogic';
 import { AuthUserPayload } from '@repo/common/types.ts';
 import { useParams } from 'next/navigation';
-import { useCanvasStore } from '../store/store';
+import { useCanvasStore, useRoomStore } from '../store/store';
 import { toast } from 'sonner';
 import { Spinner } from '@/components/ui/spinner';
 
@@ -27,7 +27,10 @@ function Canvas({ authData }: Props) {
     const params = useParams();
     const canvasId = params.canvas_id;
     const { canvasData } = useCanvasStore((state) => state)
-    const [loading,setLoading]=useState(false)
+    const [loading,setLoading]=useState(false);
+    const {roomStoreData}=useRoomStore((state)=>state)
+
+    //render and load canvas
     useEffect(() => {
         if(!canvaRef.current)return;
             const rc = rough.canvas(canvaRef.current);
@@ -49,6 +52,7 @@ function Canvas({ authData }: Props) {
 
 
 
+    //fetch drawing data
     useEffect(()=>{
 
         (async()=>{
@@ -74,6 +78,18 @@ function Canvas({ authData }: Props) {
     },[canvasData])
 
 
+
+    //for room creation
+    useEffect(() => {
+      
+        if(roomStoreData){
+            console.log(roomStoreData)
+        }
+
+    }, [roomStoreData])
+    
+
+    //handle drawing tab switches
     const handleKeys = useCallback((event: KeyboardEvent) => {
         const key = Number(event.key);
         if (key >= 1 && key <= 5) {
@@ -85,6 +101,8 @@ function Canvas({ authData }: Props) {
         }
     }, [])
 
+
+    //handle undo and redo
     const handleUndoRedo = useCallback((e: KeyboardEvent) => {
         const isCtrlKeyPressed = e.ctrlKey;
 
@@ -97,6 +115,8 @@ function Canvas({ authData }: Props) {
         }
     }, [])
 
+
+
     useEffect(() => {
 
         if (typeof window !== 'undefined') {
@@ -105,7 +125,6 @@ function Canvas({ authData }: Props) {
         }
     }, [handleKeys])
 
-    // 
 
 
 
