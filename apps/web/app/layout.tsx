@@ -13,7 +13,11 @@ const geistMono = localFont({
   variable: "--font-geist-mono",
 });
 
+<<<<<<< HEAD
 export const metadata: Metadata = {
+=======
+ export const metadata: Metadata = {
+>>>>>>> master
   title: "InkOS",
   description: "InkOS",
 };
@@ -26,8 +30,13 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark" >
     <body className={`${geistSans.variable} ${geistMono.variable} font-normal `  }>
+<<<<<<< HEAD
     <Toaster position="top-center"/>
     {children}
+=======
+    {children}
+    <Toaster position="top-center"/>
+>>>>>>> master
       </body>
     </html>
   );

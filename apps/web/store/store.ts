@@ -1,46 +1,107 @@
-import { UUID } from "crypto";
+import { CanvasSchema, Room } from "@repo/common/types.ts";
 import { create, createStore } from "zustand";
 
-
-type UserInfo ={
-    name:string;
-    email:string;
-    rooms:[];
-    chats:[];
-    token:string;
-}|null;
+type UserInfo = {
+    name: string;
+    email: string;
+    rooms: [];
+    chats: [];
+    token: string;
+} | null;
 
 interface UserStore {
-    data:UserInfo;
-    addUserData:(data:UserInfo)=>void;
-    clearUserData:()=>void;
+    data: UserInfo;
+    addUserData: (data: UserInfo) => void;
+    clearUserData: () => void;
 }
 
-const useUserInfo =create<UserStore>((set)=>({
-    data:null,
-    addUserData:(data)=>{
-       set({data})
+const useUserInfo = create<UserStore>((set) => ({
+    data: null,
+    addUserData: (data) => {
+        set({ data })
     },
-    clearUserData:()=>{
-        set({data:null})
+    clearUserData: () => {
+        set({ data: null })
     }
 
 }))
 
-interface LoggedInInfo{
-    isLoggedIn:boolean;
+interface LoggedInInfo {
+    isLoggedIn: boolean;
 
-    setIsLoggedIn:(value:boolean)=>void;
+    setIsLoggedIn: (value: boolean) => void;
 
 }
 
-const useLoggedInInfo = create<LoggedInInfo>((set)=>(
+const useLoggedInInfo = create<LoggedInInfo>((set) => (
     {
-        isLoggedIn:false,
-        setIsLoggedIn:(value:boolean)=>{
-            set({isLoggedIn:value})
+        isLoggedIn: false,
+        setIsLoggedIn: (value: boolean) => {
+            set({ isLoggedIn: value })
         }
     }
 ))
 
-export { useUserInfo,useLoggedInInfo};
+
+interface CanvasStoreType {
+    canvasData: CanvasSchema[],
+    addCanvas: (canvas: CanvasSchema[] | CanvasSchema) => void;
+    removeCanvas: (canvas_id: string) => void;
+}
+
+
+
+
+const useCanvasStore = create<CanvasStoreType>((set) => (
+    {
+        canvasData: [],
+        addCanvas: (data) => {
+            if (Array.isArray(data)) {
+                set(() => ({
+                    canvasData: data
+                }))
+            }else {
+                set((state)=>(
+                    {
+                        canvasData:[...state.canvasData,data]
+                    }
+                    
+                ))
+            }
+        },
+        removeCanvas: (data) => {
+            set((state) => ({
+                canvasData: state.canvasData.filter((element) => element.id != data)
+            }))
+        }
+    }
+))
+
+
+type RoomObjType = {
+    room: Room,
+    canvas: CanvasSchema,
+}
+
+interface RoomStoreSchema {
+    roomStoreData: RoomObjType | null;
+
+    setRoomStoreData: (data: RoomObjType) => void;
+
+}
+
+const useRoomStore = create<RoomStoreSchema>((set) => (
+    {
+        roomStoreData: null,
+        setRoomStoreData: (data: RoomObjType) => {
+            set((state) => (
+                {
+                    roomStoreData: data
+                }
+            ))
+        }
+
+    }
+))
+
+export { useUserInfo, useLoggedInInfo, useCanvasStore,useRoomStore };

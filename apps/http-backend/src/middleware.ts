@@ -1,7 +1,17 @@
+<<<<<<< HEAD
 import { NextFunction, Request, Response } from "express";
 import jwt from 'jsonwebtoken'
 import { JWT_SECRET } from "@repo/backend-common/config.ts";
 
+=======
+import e, { NextFunction, Request, Response } from "express";
+import jwt from 'jsonwebtoken'
+import { JWT_SECRET } from "@repo/backend-common/config.ts";
+
+const {TokenExpiredError}= jwt;
+
+
+>>>>>>> master
 export const authMiddleware = async(req:Request,res:Response,next:NextFunction)=>{
     const token = req.headers.authorization;
     if(!token || !token.startsWith("Bearer ")){
@@ -12,13 +22,29 @@ export const authMiddleware = async(req:Request,res:Response,next:NextFunction)=
 
     const extractedToken = token.replace("Bearer ","");
 
+<<<<<<< HEAD
 
     const payload = jwt.verify(extractedToken,JWT_SECRET);
     if(payload){
         req.userPayload=payload as {id:string,email:string};
+=======
+   try {
+    const payload = jwt.verify(extractedToken,JWT_SECRET);
+    if(payload){
+        req.userPayload=payload as {userId:string,email:string};
+>>>>>>> master
         next()
     }else{
         res.status(403).json("Unauthorized")
     }
 
+<<<<<<< HEAD
+=======
+   } catch (error) {
+    if(error instanceof TokenExpiredError){
+        console.log(error.message)
+        res.status(404).json(error.message)
+    }
+   }
+>>>>>>> master
 }

@@ -1,1 +1,5 @@
+<<<<<<< HEAD
 {"root":["./src/index.ts"],"version":"5.9.2"}
+=======
+{"root":["./src/Room.ts","./src/User.ts","./src/index.ts"],"version":"5.9.2"}
+>>>>>>> master
