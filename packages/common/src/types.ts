@@ -38,15 +38,7 @@ export interface SignUpUser{
     password:string;
 }
 
-<<<<<<< HEAD
-export interface Canvas{
-    id:string,
-    name: string,
-    userId: string,
-    drawing:[]
-    createdAt: string,
-    updatedAt: string
-=======
+
 
 
 
@@ -58,27 +50,16 @@ export interface CanvasSchema{
     canvasType:'PROJECT'|'WORKSPACE'
     createdAt: string;
     updatedAt: string;
->>>>>>> master
 }
 
 
 export interface Room {
-<<<<<<< HEAD
-    slug:string;
-    adminId:string;
-}
 
-export interface Chat{
-    message:string;
-    roomId:number;
-}
-=======
     name:string,
     adminId:string,
     roomCode:number,
 }
 
->>>>>>> master
 
 
 export interface SignInUser{
@@ -87,8 +68,7 @@ export interface SignInUser{
 }
 
 
-<<<<<<< HEAD
-=======
+
 
 export type Drawings={
     type:'rect',
@@ -98,4 +78,3 @@ export type Drawings={
     height:number,
     canvasId:string
 }
->>>>>>> master
