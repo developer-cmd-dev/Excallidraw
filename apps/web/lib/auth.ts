@@ -18,12 +18,9 @@ interface UserPayload {
 export const authOption: NextAuthOptions = {
     secret: JWT_SECRET,
     session: {
-<<<<<<< HEAD
-        strategy: 'jwt'
-=======
+
         strategy: 'jwt',
         maxAge:60*1000
->>>>>>> master
     },
     pages: {
         signIn: '/signin'
@@ -51,11 +48,9 @@ export const authOption: NextAuthOptions = {
                     if (error instanceof AxiosError) {
                         console.log(error.response?.data)
                         throw new Error(error.response?.data)
-<<<<<<< HEAD
-=======
+
                     }else{
                         console.log(error)
->>>>>>> master
                     }
                 }
 
@@ -78,20 +73,12 @@ export const authOption: NextAuthOptions = {
                     console.log(error)
                     return false;
                 }
-<<<<<<< HEAD
-            }
 
-            return true;
-
-
-
-=======
             }else{
                 console.log('signin using credential')
                 return true;
             }
 
->>>>>>> master
 
         },
 
@@ -102,12 +89,7 @@ export const authOption: NextAuthOptions = {
                 });
 
                 token.userData = res.data;
-<<<<<<< HEAD
-
-            } else if (account?.provider==='credential') {
-=======
             } else if (account?.provider==='credentials') {
->>>>>>> master
                 token.userData = user;
             }
             
