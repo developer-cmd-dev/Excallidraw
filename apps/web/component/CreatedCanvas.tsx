@@ -1,5 +1,5 @@
 "use client"
-import { AuthUserPayload, Canvas } from '@repo/common/types.ts'
+import { AuthUserPayload, CanvasSchema } from '@repo/common/types.ts'
 import React, { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
@@ -9,10 +9,10 @@ import { toast } from 'sonner'
 import { Spinner } from '@/components/ui/spinner'
 import { useCanvasStore } from '../store/store'
 interface Props{
-    canvases:Canvas[]
+    canvasPayload:CanvasSchema[]
     authPayload:AuthUserPayload
 }
-function CreatedCanvas({canvases,authPayload}:Props) {
+function CreatedCanvas({canvasPayload,authPayload}:Props) {
 
     const {addCanvas,canvasData,removeCanvas}=useCanvasStore((state)=>state);
     const router = useRouter()
@@ -20,8 +20,11 @@ function CreatedCanvas({canvases,authPayload}:Props) {
     const [loading,setLoading]=useState(false);
 
     useEffect(()=>{
-        addCanvas(canvases)
-    },[canvases])
+        addCanvas(canvasPayload)        
+    },[canvasPayload])
+
+
+    
 
 
     const handleDeleteDrawing =async (canvasId:string)=>{

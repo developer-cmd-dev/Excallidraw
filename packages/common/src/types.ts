@@ -40,13 +40,15 @@ export interface SignUpUser{
 
 
 
-export interface Canvas{
-    id:string,
-    name: string,
-    userId: string,
-    drawing:string[]
-    createdAt: string,
-    updatedAt: string
+
+export interface CanvasSchema{
+    id:string;
+    name: string;
+    userId: string;
+    drawing:string[];
+    canvasType:'PROJECT'|'WORKSPACE'
+    createdAt: string;
+    updatedAt: string;
 }
 
 

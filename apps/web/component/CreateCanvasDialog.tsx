@@ -21,7 +21,6 @@ import { useCanvasStore } from "../store/store"
 import { useRouter } from "next/navigation"
 
 interface Props {
-  children?: React.ReactNode;
   type: 'blank-page' | 'room-workspace',
   access_token: string;
 }
@@ -29,12 +28,12 @@ interface Props {
 
 
 
-export function DialogBox({ children, access_token }: Props) {
+export function CreateCanvasDialog({  access_token }: Props) {
   const backendUrl = process.env.NEXT_BACKEND_URL;
   const [name, setName] = useState('Untitled Project');
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false)
-  const { addCanvas } = useCanvasStore((state) => state)
+  const { addCanvas, canvasData } = useCanvasStore((state) => state)
   const router = useRouter();
   const createCanvas = async () => {
     try {
@@ -63,31 +62,39 @@ export function DialogBox({ children, access_token }: Props) {
 
 
   return (
-    <Dialog open={open} onOpenChange={() => setOpen(true)} >
-      <form  >
+
+
+
+    <Dialog>
+      <form >
         <DialogTrigger asChild>
-          {children}
+          <Button className=' bg-neutral-800 text-white border cursor-pointer hover:bg-neutral-700 font-extralight p-2 text-sm h-25 w-40 flex flex-col  items-center justify-center'>
+            <div className='w-full h-3/4 flex items-center justify-center'>
+              <svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="0.5" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-plus-icon lucide-plus"><path d="M5 12h14" /><path d="M12 5v14" /></svg>
+            </div>
+            <p>Create a Blank file</p>
+          </Button>
+
         </DialogTrigger>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>Create Blank Canvas </DialogTitle>
+            <DialogTitle>Create Canvas</DialogTitle>
             <DialogDescription>
-              A short description about creating a new blank canvas. Fill out the details below and click "Save changes" to proceed.
+            Create a new blank canvas by entering a name below. Click "Save changes" to create your canvas.
             </DialogDescription>
           </DialogHeader>
           <FieldGroup>
             <Field>
               <Label htmlFor="name-1">Name</Label>
-              <Input onChange={(e) => setName(e.target.value)} value={name} id="name-1" name="name" />
+              <Input id="name-1" name="name" value={name} onChange={(e)=>setName(e.target.value)} />
             </Field>
+
           </FieldGroup>
           <DialogFooter>
-           
-              <Button onClick={() => setOpen(false)} variant="outline">Cancel</Button>
-
-            <Button className="cursor-pointer" type="submit" onClick={() => {
-              createCanvas();
-            }}>{loading ? <Spinner /> : "Save Changes"}</Button>
+            <DialogClose asChild>
+              <Button variant="outline">Cancel</Button>
+            </DialogClose>
+            <Button onClick={createCanvas}>{loading ?<Spinner/>:"Save changes"}</Button>
           </DialogFooter>
         </DialogContent>
       </form>

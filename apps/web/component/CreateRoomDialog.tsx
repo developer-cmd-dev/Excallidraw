@@ -1,7 +1,7 @@
 "use client"
 import React, { useEffect, useState } from 'react'
 
-import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { FieldGroup, Field } from '@/components/ui/field';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -10,21 +10,21 @@ import { Spinner } from '@/components/ui/spinner';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
 import { useRoomStore } from '../store/store';
-import { connectSocket } from '../ws/websocket';
+import { connectSocket } from '../lib/websocket';
+
 interface Props {
-  children: React.ReactNode,
   accessToken: string;
 }
 
-function CreateRoomDialog({ children, accessToken }: Props) {
+function CreateRoomDialog({  accessToken }: Props) {
 
   const [open, setOpen] = useState(false)
   const [name, setName] = useState('')
   const [loading, setLoading] = useState(false);
   const backendUrl = process.env.NEXT_BACKEND_URL;
   const router = useRouter();
-  const {roomStoreData, setRoomStoreData } = useRoomStore((state) => state)
-  const socketUrl = process.env.NEXT_WEBSOCKET_URL;
+  const { roomStoreData, setRoomStoreData } = useRoomStore((state) => state)
+
   const createRoom = async () => {
 
     try {
@@ -41,21 +41,16 @@ function CreateRoomDialog({ children, accessToken }: Props) {
 
       if (result.status === 200) {
         setRoomStoreData(result.data);
-        const ws = connectSocket(accessToken);
+        const socket = await connectSocket(accessToken);
+        if (socket) {
+          socket.send(JSON.stringify({
+            type: 'create-room',
+            room_id: roomStoreData?.room.roomCode
+          }))
 
-
-        if (ws) {
-          ws.send(JSON.stringify(
-            {
-              type: 'create-room',
-              room_id: result.data.room.roomCode
-            }
-          ))
-
-
-          ws.on('message', (data) => {
-            console.log(data.toString());
-          })
+          socket.onmessage = (data) => {
+            console.log(data.data)
+          }
         }
 
       }
@@ -73,58 +68,41 @@ function CreateRoomDialog({ children, accessToken }: Props) {
 
 
 
-  useEffect(()=>{
 
-    if(roomStoreData){
-  const ws = connectSocket(accessToken);
-
-  if(ws){
-    ws.send(JSON.stringify({
-      type:"create-room",
-      room_id:roomStoreData.room.roomCode
-    }))
-
-
-
-    ws.on('message',(data)=>{
-      console.log(data.toString())
-    })
-  }
-
-
-    }
-
-
-
-  },[roomStoreData])
 
 
   return (
-    <Dialog open={open} onOpenChange={() => setOpen(true)} >
-      <form  >
+
+    <Dialog>
+      <form >
         <DialogTrigger asChild>
-          {children}
+          <Button className=' border text-white bg-neutral-800 cursor-pointer hover:bg-neutral-700  font-extralight p-2 text-sm h-25 w-40 flex flex-col  items-center justify-center'>
+            <div className='w-full h-3/4 flex items-center justify-center'>
+              <svg xmlns="http://www.w3.org/2000/svg" width="45" height="45" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="0.5" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-users-icon lucide-users"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><path d="M16 3.128a4 4 0 0 1 0 7.744" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><circle cx="9" cy="7" r="4" /></svg>
+            </div>
+            <p>Create and Join Team</p>
+          </Button>
+
         </DialogTrigger>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>Create Workspace </DialogTitle>
+            <DialogTitle>Create Workspace</DialogTitle>
             <DialogDescription>
-              A short description about creating a new workspace. Fill out the details below and click "Save changes" to proceed.
+              Create a new collaborative workspace for your team. Enter a name below and click "Save changes" to create and join the workspace.
             </DialogDescription>
           </DialogHeader>
           <FieldGroup>
             <Field>
               <Label htmlFor="name-1">Name</Label>
-              <Input onChange={(e) => setName(e.target.value)} value={name} id="name-1" name="name" />
+              <Input id="name-1" name="name" value={name} onChange={(e) => setName(e.target.value)} />
             </Field>
+
           </FieldGroup>
           <DialogFooter>
-
-            <Button onClick={() => setOpen(false)} variant="outline">Cancel</Button>
-
-            <Button className="cursor-pointer" type="submit" onClick={() => {
-              createRoom();
-            }}>{loading ? <Spinner /> : "Save Changes"}</Button>
+            <DialogClose asChild>
+              <Button variant="outline">Cancel</Button>
+            </DialogClose>
+            <Button onClick={createRoom}>{loading ? <Spinner /> : "Save changes"}</Button>
           </DialogFooter>
         </DialogContent>
       </form>

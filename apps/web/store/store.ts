@@ -1,4 +1,4 @@
-import { Canvas, Room } from "@repo/common/types.ts";
+import { CanvasSchema, Room } from "@repo/common/types.ts";
 import { create, createStore } from "zustand";
 
 type UserInfo = {
@@ -44,8 +44,8 @@ const useLoggedInInfo = create<LoggedInInfo>((set) => (
 
 
 interface CanvasStoreType {
-    canvasData: Canvas[],
-    addCanvas: (canvas: Canvas[] | Canvas) => void;
+    canvasData: CanvasSchema[],
+    addCanvas: (canvas: CanvasSchema[] | CanvasSchema) => void;
     removeCanvas: (canvas_id: string) => void;
 }
 
@@ -57,9 +57,16 @@ const useCanvasStore = create<CanvasStoreType>((set) => (
         canvasData: [],
         addCanvas: (data) => {
             if (Array.isArray(data)) {
-                set((state) => ({
-                    canvasData: [...state.canvasData, ...data]
+                set(() => ({
+                    canvasData: data
                 }))
+            }else {
+                set((state)=>(
+                    {
+                        canvasData:[...state.canvasData,data]
+                    }
+                    
+                ))
             }
         },
         removeCanvas: (data) => {
@@ -73,7 +80,7 @@ const useCanvasStore = create<CanvasStoreType>((set) => (
 
 type RoomObjType = {
     room: Room,
-    canvas: Canvas,
+    canvas: CanvasSchema,
 }
 
 interface RoomStoreSchema {

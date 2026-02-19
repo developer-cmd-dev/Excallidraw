@@ -2,7 +2,7 @@ import express, { response } from 'express';
 import jwt from 'jsonwebtoken'
 import { JWT_SECRET } from "@repo/backend-common/config.ts";
 import { authMiddleware } from './middleware.js';
-import { AuthUserPayload, Canvas, CreateUserZodSchema, Drawings, Room, SignInUserZodSchema, SignUpUser } from '@repo/common/types.ts';
+import {  CreateUserZodSchema, SignUpUser } from '@repo/common/types.ts';
 import { prisma } from '@repo/db/prisma.ts';
 import bycrypt, { hash } from 'bcrypt';
 import bodyparser from 'body-parser';
@@ -170,7 +170,7 @@ app.post('/blank-canvas', authMiddleware, async (req, res) => {
             }
         })
 
-        redisClient.set(userId, JSON.stringify(response), { expiration: { type: "EX", value: 6000 } })
+        redisClient.del(userId);
 
         if (!response) {
             res.status(500).json("Something went wrong")
@@ -190,10 +190,7 @@ app.post('/blank-canvas', authMiddleware, async (req, res) => {
 
 app.delete('/delete-canvas', authMiddleware, async (req, res) => {
 
-    const canvasId = req.query.canvasId?.toString();
-
-
-
+    const canvasId = req.query.canvasId?.toString();    
     try {
         if (!canvasId) {
             res.status(400).json("Invalid id");
@@ -308,21 +305,29 @@ app.post('/create-room', authMiddleware, async (req, res) => {
                 name: body.name,
                 roomCode,
                 adminId: req.userPayload.userId,
+                canvas:{
+                    create:[{
+                        name:body.name,
+                        userId:req.userPayload.userId,
+                        canvasType:"WORKSPACE",
+                    }]
+                }
             },
             include:{canvas:true}
         })
 
-      const canvasResult = await  prisma.canvas.create({
-            data:{
-                name:"room canvas",
-                userId:req.userPayload.userId,
-                roomId:roomResult.roomCode
-            }
-        })
+    //   const canvasResult = await  prisma.canvas.create({
+    //         data:{
+    //             name:"room canvas",
+    //             userId:req.userPayload.userId,
+    //             roomId:roomResult.roomCode,
+    //             canvasType:body.canvasType
+    //         }
+    //     })
 
-        res.status(200).json({room:roomResult,
-            canvas:canvasResult
-        });
+    console.log(roomResult)
+
+        res.status(200).json("created room");
 
 
     } catch (error) {

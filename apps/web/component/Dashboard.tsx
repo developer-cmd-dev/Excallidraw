@@ -1,23 +1,52 @@
-
-import React, { FormEvent } from 'react'
+"use client"
+import React, { FormEvent, useEffect, useState } from 'react'
 import { Input } from '@/components/ui/input'
 import DropdownMenco from './DropdownMenu'
 import Card from './Card'
-import { DialogBox } from './Dialog'
+import { CreateCanvasDialog } from './CreateCanvasDialog'
 import { SessionProvider, useSession } from 'next-auth/react'
-import { AuthUserPayload, Canvas } from '@repo/common/types.ts'
+import { AuthUserPayload, CanvasSchema } from '@repo/common/types.ts'
 import axios, { Axios, AxiosError } from 'axios'
 import { toast } from 'sonner'
 import CreatedCanvas from './CreatedCanvas'
 import CreateRoomDialog from './CreateRoomDialog'
+import { useCanvasStore } from '../store/store'
 
 interface Props {
     authPayload: AuthUserPayload;
-    canvas: Canvas[]
 }
 
-function Dashboard({ authPayload, canvas }: Props) {
-   
+
+
+const fetchData = async (token: string): Promise<CanvasSchema[]> => {
+    const backendUrl = process.env.NEXT_BACKEND_URL;
+    try {
+        const result = await axios.get(`${backendUrl}/canvas`, { headers: { Authorization: `Bearer ${token}` } })
+        return result.data as CanvasSchema[]
+    } catch (error) {
+        if (error instanceof AxiosError) {
+            console.log(error.response?.data)
+            throw new Error(error.response?.data)
+        } else {
+            throw new Error("Something went wrong");
+        }
+
+
+    }
+}
+
+function Dashboard({ authPayload }: Props) {
+
+    const { canvasData, addCanvas } = useCanvasStore((state) => state)
+
+    useEffect(() => {
+        (async () => {
+            const data = await fetchData(authPayload.access_token);
+            addCanvas(data);
+        })()
+    }, [])
+
+
 
 
     return (
@@ -54,28 +83,13 @@ function Dashboard({ authPayload, canvas }: Props) {
                 <div className=' flex-1 w-full flex flex-col gap-4   '>
 
                     <div className='flex gap-4 p-3 '>
-                        <DialogBox access_token={authPayload.access_token}  type='blank-page'>
-                            <Card className=' bg-neutral-800 cursor-pointer hover:bg-neutral-700 font-extralight p-2 text-sm h-25 w-40 flex flex-col  items-center justify-center'>
-                                <div className='w-full h-3/4 flex items-center justify-center'>
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="0.5" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-plus-icon lucide-plus"><path d="M5 12h14" /><path d="M12 5v14" /></svg>
-                                </div>
-                                <p>Create a Blank file</p>
-                            </Card>
-                        </DialogBox>
-
-                    <CreateRoomDialog accessToken={authPayload.access_token}>
-                    <Card className=' bg-neutral-800 cursor-pointer hover:bg-neutral-700  font-extralight p-2 text-sm h-25 w-40 flex flex-col  items-center justify-center'>
-                            <div className='w-full h-3/4 flex items-center justify-center'>
-                                <svg xmlns="http://www.w3.org/2000/svg" width="45" height="45" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="0.5" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-users-icon lucide-users"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><path d="M16 3.128a4 4 0 0 1 0 7.744" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><circle cx="9" cy="7" r="4" /></svg>
-                            </div>
-                            <p>Create and Join Team</p>
-                        </Card>
-                    </CreateRoomDialog>
+                        <CreateCanvasDialog access_token={authPayload.access_token} type='blank-page' />
+                        <CreateRoomDialog accessToken={authPayload.access_token} />
                     </div>
 
                     {/* Canvas */}
-                    <CreatedCanvas authPayload = {authPayload} canvases={canvas}/>
-                    
+                    <CreatedCanvas authPayload={authPayload} canvasPayload={canvasData} />
+
 
                 </div>
 

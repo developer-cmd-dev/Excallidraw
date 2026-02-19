@@ -4,7 +4,7 @@ import { JWT_SECRET } from '@repo/backend-common/config.ts';
 import User from './User';
 import Room from './Room';
 import { prisma } from '@repo/db/prisma.ts';
-
+import {URL} from 'url'
 const wss = new WebSocketServer({
     port: 8080
 })
@@ -16,18 +16,24 @@ const rooms = new Map<number, Room>();
 
 wss.on('connection', async (ws, req) => {
 
-    const authToken = req.headers['authorization'];
-    if (!authToken && !authToken?.startsWith('Bearer ')) {
+    
+    const url = `ws://localhost:8080${req.url?.toString()}`;
+    
+    const urlObj = new URL(url);
+    const token = urlObj.searchParams.get('token');
+
+    if (!token) {
         ws.close()
         return;
     }
 
-    const user: User | null = await authUser(authToken, ws);
+    const user: User | null = await authUser(token, ws);
 
     if (user) {
         let roomObj: Room | null = null;
         ws.on('message', async (data) => {
             const message = JSON.parse(data.toString());
+            console.log(message)
             if (message.type === 'create-room') {
                 roomObj = new Room(message.room_id, user);
                 roomObj.setUser(ws);
