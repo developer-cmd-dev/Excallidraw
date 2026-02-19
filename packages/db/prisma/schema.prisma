@@ -27,18 +27,23 @@ model Room {
   name      String
   adminId   String
   roomCode  Int     @id 
-  admin     User     @relation(fields: [adminId], references: [id])
+  user     User     @relation(fields: [adminId], references: [id])
   canvas    Canvas[]
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 }
 
 
+enum CanvasType{
+  PROJECT
+  WORKSPACE
+}
 
 model Canvas {
   id        String    @id @default(uuid())
   name      String
   drawing   String[]
+  canvasType CanvasType @default(PROJECT)
   userId    String
   roomId    Int?
   user      User @relation(fields: [userId],references: [id])
