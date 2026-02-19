@@ -18,76 +18,40 @@ model User {
   name      String?
   password  String?
   rooms     Room[]
-<<<<<<< HEAD
-  chats     Chat[]
-=======
->>>>>>> master
   canvas    Canvas[]
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 }
 
 model Room {
-<<<<<<< HEAD
-  id        Int      @id @default(autoincrement())
-  slug      String
-  adminId   String
-  admin     User     @relation(fields: [adminId], references: [id])
-  chats     Chat[]
-=======
+
   name      String
   adminId   String
   roomCode  Int     @id 
   user     User     @relation(fields: [adminId], references: [id])
   canvas    Canvas[]
->>>>>>> master
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 }
 
-<<<<<<< HEAD
-model Chat {
-  id      Int    @id @default(autoincrement())
-  message String
-  roomId  Int
-  userId  String
-  room    Room   @relation(fields: [roomId], references: [id])
-  user    User   @relation(fields: [userId], references: [id])
-=======
+
 
 enum CanvasType{
   PROJECT
   WORKSPACE
->>>>>>> master
 }
 
 model Canvas {
   id        String    @id @default(uuid())
   name      String
-<<<<<<< HEAD
-  drawing   Drawing[]
-  userId    String
-  user      User @relation(fields: [userId],references: [id])
-=======
+
   drawing   String[]
   canvasType CanvasType @default(PROJECT)
   userId    String
   roomId    Int?
   user      User @relation(fields: [userId],references: [id])
   room      Room? @relation(fields: [roomId],references: [roomCode])
->>>>>>> master
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @updatedAt @map("updated_at")
 }
 
-<<<<<<< HEAD
-model Drawing {
-  id          String   @id @default(uuid())
-  drawingData String[]
-  canvasId    String
-  canvas      Canvas   @relation(fields: [canvasId], references: [id])
-   createdAt DateTime  @default(now()) @map("created_at")
-  updatedAt DateTime  @updatedAt @map("updated_at")
-}
-=======
->>>>>>> master
