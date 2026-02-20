@@ -41,6 +41,8 @@ function CreateRoomDialog({  accessToken }: Props) {
 
       if (result.status === 200) {
         setRoomStoreData(result.data);
+        router.push(`/canvas/${result.data.canvas.id}`)
+        setLoading(false);
         const socket = await connectSocket(accessToken);
         if (socket) {
           socket.send(JSON.stringify({
@@ -54,8 +56,7 @@ function CreateRoomDialog({  accessToken }: Props) {
         }
 
       }
-      router.push(`/canvas/${result.data.canvas.id}`)
-      setLoading(false);
+  
 
     } catch (error) {
       console.log(error);
