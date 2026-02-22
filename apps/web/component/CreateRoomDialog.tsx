@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
-import { useRoomStore } from '../store/store';
+import { useCanvasStore, useRoomStore } from '../store/store';
 import { connectSocket } from '../lib/websocket';
 
 interface Props {
@@ -24,6 +24,7 @@ function CreateRoomDialog({  accessToken }: Props) {
   const backendUrl = process.env.NEXT_BACKEND_URL;
   const router = useRouter();
   const { roomStoreData, setRoomStoreData } = useRoomStore((state) => state)
+  const {addCanvas}=useCanvasStore(state=>state)
 
   const createRoom = async () => {
 
@@ -41,20 +42,9 @@ function CreateRoomDialog({  accessToken }: Props) {
 
       if (result.status === 200) {
         setRoomStoreData(result.data);
-        router.push(`/canvas/${result.data.canvas.id}`)
+        addCanvas(result.data.canvas[0]);
+        router.push(`/canvas/${result.data.canvas[0].id}/${result.data.roomCode}`)
         setLoading(false);
-        const socket = await connectSocket(accessToken);
-        if (socket) {
-          socket.send(JSON.stringify({
-            type: 'create-room',
-            room_id: roomStoreData?.room.roomCode
-          }))
-
-          socket.onmessage = (data) => {
-            console.log(data.data)
-          }
-        }
-
       }
   
 

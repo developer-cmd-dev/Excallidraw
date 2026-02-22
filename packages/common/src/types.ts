@@ -58,6 +58,8 @@ export interface Room {
     name:string,
     adminId:string,
     roomCode:number,
+    canvas: CanvasSchema[],
+
 }
 
 

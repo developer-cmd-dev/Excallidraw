@@ -14,4 +14,13 @@ export default class User  {
     setRoomId(id:number){
         this.roomId=id;
     }
+
+
+    toJson(){
+        return{
+            userId: this.userId,
+            email: this.email,
+            roomId: this.roomId
+        }
+    }
 }

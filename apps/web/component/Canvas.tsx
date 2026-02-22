@@ -7,45 +7,62 @@ import axios, { Axios, AxiosError } from 'axios';
 import { initDraw, redo, renderExistingCanvas, ShapesType, undo } from '../draw/drawingLogic'
 import { handleType } from '../draw/drawingLogic';
 import { AuthUserPayload } from '@repo/common/types.ts';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useCanvasStore, useRoomStore } from '../store/store';
 import { toast } from 'sonner';
 import { Spinner } from '@/components/ui/spinner';
+import { connectSocket, getSocket } from '../lib/websocket';
+import UsersOfRoom from './UsersOfRoom';
+import { register } from 'module';
 
 
+export interface RoomUsers {
+    userId: string;
+    email: string;
+    roomId: number;
+
+}
 interface Props {
-    authData: AuthUserPayload
+    authData: AuthUserPayload,
 }
 
 
 
 function Canvas({ authData }: Props) {
-    const backendUrl= process.env.NEXT_BACKEND_URL;
+    const backendUrl = process.env.NEXT_BACKEND_URL;
     const canvaRef = useRef<HTMLCanvasElement | null>(null);
     const [innerHeight, setInnerHeight] = useState(300);
     const [innerWidth, setInnerWidth] = useState(100);
     const [drawingTabs, setDrawingTabs] = useState(0);
-    const params = useParams();
-    const canvasId = params.canvas_id;
+    const params = useParams<{slug:string[]}>(); 
+    
+    const canvasId = params.slug[0];
+    const roomCode = params.slug[1];
+
+
     const { canvasData } = useCanvasStore((state) => state)
-    const [loading,setLoading]=useState(false);
-    const {roomStoreData}=useRoomStore((state)=>state)
+    const [loading, setLoading] = useState(false);
+    const { roomStoreData ,setRoomStoreData} = useRoomStore((state) => state);
+    const [roomUsers, setRoomUsers] = useState<RoomUsers[]>([]);
+    const router = useRouter();
+    const [ws,setWs]=useState<WebSocket|null>(null)
+
 
     //render and load canvas
     useEffect(() => {
-        if(!canvaRef.current)return;
-            const rc = rough.canvas(canvaRef.current);
+        if (!canvaRef.current) return;
+        const rc = rough.canvas(canvaRef.current);
         try {
             initDraw(rc, canvaRef.current, authData.access_token, String(canvasId));
-            
+
         } catch (error) {
-            if(error instanceof AxiosError){
+            if (error instanceof AxiosError) {
                 console.log(error.response?.data)
             }
         }
         if (typeof window !== 'undefined') {
             setInnerHeight(window.innerHeight);
-            setInnerWidth(window.innerWidth)
+            setInnerWidth(window.innerWidth);
         }
 
 
@@ -53,84 +70,116 @@ function Canvas({ authData }: Props) {
 
 
     //fetch drawing data
-    useEffect(()=>{
+    useEffect(() => {
 
-        (async()=>{
+        (async () => {
             try {
                 setLoading(true)
-                if(canvasId){
-                    const response=await  axios.get(`${backendUrl}/get-drawing/?canvasId=${canvasId}`);
+                if (canvasId) {
+                    const response = await axios.get(`${backendUrl}/get-drawing/?canvasId=${canvasId}`);
                     renderExistingCanvas(response.data.drawing);
                 }
                 setLoading(false)
             } catch (error) {
                 setLoading(false)
-                if(error instanceof AxiosError){
+                if (error instanceof AxiosError) {
                     toast.message(error.response?.data);
                 }
-            }finally{
+            } finally {
                 setLoading(false)
             }
 
         })()
 
 
-    },[canvasData])
+    }, [canvasData])
 
 
+    useEffect(()=>{
+       async function socketHandler(){
+        const socket =await connectSocket(authData.access_token)
 
-    //for room creation
-    useEffect(() => {
-      
-        if(roomStoreData){
-            console.log(roomStoreData)
-        }
+            socket.send(JSON.stringify(
+                {
+                    type:'create-room',
+                    roomCode
+                }
+            ))
 
-    }, [roomStoreData])
-    
-
-    //handle drawing tab switches
-    const handleKeys = useCallback((event: KeyboardEvent) => {
-        const key = Number(event.key);
-        if (key >= 1 && key <= 5) {
-            setDrawingTabs(key)
-            const getType = shape.find((elem) => elem.keyBind == key);
-            if (getType) {
-                handleType(getType?.type)
+            socket.onmessage = (message)=>{
+                const parseMessage = JSON.parse(message.data);
+                setRoomUsers(parseMessage.users)
             }
         }
-    }, [])
 
+     roomCode &&  socketHandler()
 
-    //handle undo and redo
-    const handleUndoRedo = useCallback((e: KeyboardEvent) => {
-        const isCtrlKeyPressed = e.ctrlKey;
-
-        const isZkeyPressed = e.key == 'z';
-        const isYkeyPressed = e.key == 'y';
-        if (isCtrlKeyPressed && isZkeyPressed) {
-            undo()
-        } else if (isCtrlKeyPressed && isYkeyPressed) {
-            redo()
-        }
-    }, [])
+    },[])
 
 
 
-    useEffect(() => {
 
-        if (typeof window !== 'undefined') {
-            window.addEventListener('keypress', handleKeys);
-            window.addEventListener('keydown', handleUndoRedo)
-        }
-    }, [handleKeys])
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        //handle drawing tab switches
+        const handleKeys = useCallback((event: KeyboardEvent) => {
+            const key = Number(event.key);
+            if (key >= 1 && key <= 5) {
+                setDrawingTabs(key)
+                const getType = shape.find((elem) => elem.keyBind == key);
+                if (getType) {
+                    handleType(getType?.type)
+                }
+            }
+        }, [])
+    
+    
+        //handle undo and redo
+        const handleUndoRedo = useCallback((e: KeyboardEvent) => {
+            const isCtrlKeyPressed = e.ctrlKey;
+    
+            const isZkeyPressed = e.key == 'z';
+            const isYkeyPressed = e.key == 'y';
+            if (isCtrlKeyPressed && isZkeyPressed) {
+                undo()
+            } else if (isCtrlKeyPressed && isYkeyPressed) {
+                redo()
+            }
+        }, [])
+    
+    
+    
+        useEffect(() => {
+    
+            if (typeof window !== 'undefined') {
+                window.addEventListener('keypress', handleKeys);
+                window.addEventListener('keydown', handleUndoRedo)
+            }
+        }, [handleKeys])
+    
+    
+
+  
 
 
 
 
 
     return (
-        
+
         <div className='relative h-screen w-full bg-neutral-900 overflow-hidden flex items-center justify-center'>
 
             {/* menubar */}
@@ -159,9 +208,10 @@ function Canvas({ authData }: Props) {
 
             </div>
 
+            <UsersOfRoom users={roomUsers} />
+
             <div className='border w-full h-full flex-1  flex items-center justify-center'>
 
-                {/* {!loading ? <canvas height={innerHeight} width={innerWidth} id='canvas' ref={canvaRef} className=' bg-black ' />:<Spinner/>} */}
 
                 <canvas height={innerHeight} width={innerWidth} id='canvas' ref={canvaRef} className=' bg-black ' />
             </div>
@@ -180,6 +230,9 @@ interface TabsType {
     icon: React.ReactNode;
     keyBind: number;
 }
+
+
+
 
 
 

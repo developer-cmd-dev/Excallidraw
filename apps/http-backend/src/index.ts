@@ -13,6 +13,7 @@ import cookieParser from 'cookie-parser'
 
 import redisClient from '@repo/backend-common/redis.ts'
 import _, { chain, result } from 'lodash'
+import { ParseStatus } from 'zod/v3';
 
 
 const app = express();
@@ -155,8 +156,19 @@ app.get('/canvas', authMiddleware, async (req, res) => {
         if (cache && JSON.parse(cache).length > 0) {
             res.status(200).json(JSON.parse(cache));
         } else {
-            const result = await prisma.canvas.findMany({ where: { userId: req.userPayload.userId }, take: 10 });
-            redisClient.set(req.userPayload.userId, JSON.stringify(result), { expiration: { type: 'EX', value: 6000 } });
+            const result = await prisma.user.findUnique({ where: { id: req.userPayload.userId },
+   
+            include:{
+                canvas:true,
+                rooms:true,
+                
+            },
+            omit:{
+                password:true
+            }
+           
+            });
+            redisClient.set(req.userPayload.userId, JSON.stringify(result), { expiration: { type: 'EX', value: 60 } });
             res.status(200).json(result)
         }
     } catch (error) {
@@ -328,18 +340,10 @@ app.post('/create-room', authMiddleware, async (req, res) => {
             include:{canvas:true}
         })
 
-    //   const canvasResult = await  prisma.canvas.create({
-    //         data:{
-    //             name:"room canvas",
-    //             userId:req.userPayload.userId,
-    //             roomId:roomResult.roomCode,
-    //             canvasType:body.canvasType
-    //         }
-    //     })
+  
 
-    console.log(roomResult)
 
-        res.status(200).json("created room");
+        res.status(200).json(roomResult);
 
 
     } catch (error) {

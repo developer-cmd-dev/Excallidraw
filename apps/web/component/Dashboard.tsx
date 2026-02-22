@@ -11,6 +11,7 @@ import { toast } from 'sonner'
 import CreatedCanvas from './CreatedCanvas'
 import CreateRoomDialog from './CreateRoomDialog'
 import { useCanvasStore } from '../store/store'
+import { Spinner } from '@/components/ui/spinner'
 
 interface Props {
     authPayload: AuthUserPayload;
@@ -18,11 +19,11 @@ interface Props {
 
 
 
-const fetchData = async (token: string): Promise<CanvasSchema[]> => {
+const fetchData = async (token: string): Promise<AuthUserPayload> => {
     const backendUrl = process.env.NEXT_BACKEND_URL;
     try {
         const result = await axios.get(`${backendUrl}/canvas`, { headers: { Authorization: `Bearer ${token}` } })
-        return result.data as CanvasSchema[]
+        return result.data
     } catch (error) {
         if (error instanceof AxiosError) {
             console.log(error.response?.data)
@@ -42,7 +43,7 @@ function Dashboard({ authPayload }: Props) {
     useEffect(() => {
         (async () => {
             const data = await fetchData(authPayload.access_token);
-            addCanvas(data);
+            addCanvas(data.canvas);
         })()
     }, [])
 
@@ -71,7 +72,7 @@ function Dashboard({ authPayload }: Props) {
             </div>
 
             {/* main dashboard */}
-            <div className=' h-full w-full flex-col flex '>
+            <div className=' h-full w-full flex-col flex  '>
 
                 {/* header */}
 
@@ -87,8 +88,10 @@ function Dashboard({ authPayload }: Props) {
                         <CreateRoomDialog accessToken={authPayload.access_token} />
                     </div>
 
-                    {/* Canvas */}
+                    <div className=' h-full  '>
                     <CreatedCanvas authPayload={authPayload} canvasPayload={canvasData} />
+
+                    </div>
 
 
                 </div>

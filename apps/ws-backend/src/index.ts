@@ -34,12 +34,15 @@ wss.on('connection', async (ws, req) => {
         let roomObj: Room | null = null;
         ws.on('message', async (data) => {
             const message = JSON.parse(data.toString());
-            console.log(message)
             if (message.type === 'create-room') {
-                roomObj = new Room(message.room_id, user);
-                roomObj.setUser(ws);
+                
+                roomObj = new Room(Number(message.roomCode), user);
+                roomObj.setUser(user);
                 rooms.set(message.room_id, roomObj);
-                ws.send('room created')
+                ws.send(JSON.stringify(
+                    roomObj.toJson()
+                ))
+                console.log('Room Created..')
             } else if (message.type === 'join-room') {
                 try {
                     const result = await prisma.room.update({
@@ -50,7 +53,7 @@ wss.on('connection', async (ws, req) => {
                     })
                     if (result) {
                         const getRoom = rooms.get(message.room_id);
-                        getRoom?.setUser(ws);
+                        getRoom?.setUser(user);
                         user.setRoomId(message.room_id);
                         ws.send('room joined')
                     }
@@ -60,12 +63,23 @@ wss.on('connection', async (ws, req) => {
                     ws.close()
                 }
 
-            } else if (message.type === 'message') {
+            }else if(message.type==='get-users'){
+               const findRoom =  rooms.get(Number(message.roomCode))
+               if(!findRoom){
+                ws.send("Expired Room");
+                return;
+               }
+
+                const users=findRoom.users.map((value)=>value.toJson())
+
+               ws.send(JSON.stringify(users))
+               
+            }else if (message.type === 'message') {
                 const getRoom = rooms.get(message.room_id);
                 if (getRoom) {
                     getRoom.users.forEach((users) => {
-                        if (users !== ws) {
-                            users.send(message.data);
+                        if (users !== user) {
+                            users.socket.send(message.data);
                         }
                     })
                 }
@@ -75,13 +89,13 @@ wss.on('connection', async (ws, req) => {
         ws.on('close', () => {
             if (roomObj) {
                 rooms.delete(roomObj.roomId);
-                console.log(rooms)
+                console.log('Room closed')
             } else {
                 if (user.roomId) {
                     const getRoom = rooms.get(user.roomId);
                     if (getRoom) {
-                        getRoom.deleteUser(ws);
-                        console.log(getRoom)
+                        getRoom.deleteUser(user);
+                        console.log('User left')
                     }
                 }
             }

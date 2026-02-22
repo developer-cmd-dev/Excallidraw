@@ -78,22 +78,17 @@ const useCanvasStore = create<CanvasStoreType>((set) => (
 ))
 
 
-type RoomObjType = {
-    room: Room,
-    canvas: CanvasSchema,
-}
-
 interface RoomStoreSchema {
-    roomStoreData: RoomObjType | null;
+    roomStoreData: Room | null;
 
-    setRoomStoreData: (data: RoomObjType) => void;
+    setRoomStoreData: (data: Room) => void;
 
 }
 
 const useRoomStore = create<RoomStoreSchema>((set) => (
     {
         roomStoreData: null,
-        setRoomStoreData: (data: RoomObjType) => {
+        setRoomStoreData: (data: Room) => {
             set((state) => (
                 {
                     roomStoreData: data
