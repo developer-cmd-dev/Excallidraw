@@ -134,6 +134,7 @@ function Canvas({ authData }: Props) {
                     }
                     else if (parseMessage.type == 'emit-message') {
                         const data = parseMessage.data as SocketUser;
+                        console.log(data)
                         setRoomUsers((prev) => [...prev, data])
                     } else if (parseMessage.type == 'error') {
                         const data = parseMessage.data as SocketErrorMessage;

@@ -318,9 +318,8 @@ app.post('/create-room', authMiddleware, async (req, res) => {
     try {
 
         const roomCode = Math.floor(Math.random() * 10000);
-        console.log(req.body, roomCode)
 
-        const result =await    prisma.$transaction(async(tx)=>{
+        const result =await  prisma.$transaction(async(tx)=>{
                 const room =await tx.room.create({
                     data: {
                         name: body.name,
@@ -334,7 +333,8 @@ app.post('/create-room', authMiddleware, async (req, res) => {
                             }]
                         },
                     },
-                    include: { canvas: true }
+                    include: { canvas: true },
+                    
                 })
 
                 const user =await tx.user.update({
@@ -343,12 +343,17 @@ app.post('/create-room', authMiddleware, async (req, res) => {
                     },
                     data:{
                         roomId:room.roomCode
-                    }
+                    },
+                    
                 })
 
                 return room;
 
 
+            },{
+              maxWait:5000,
+              timeout:100000,
+                
             })
 
 
@@ -358,7 +363,7 @@ app.post('/create-room', authMiddleware, async (req, res) => {
 
 
     } catch (error) {
-
+        console.log(error)
         res.status(500).json('Internal Server Error');
     }
 
@@ -383,8 +388,7 @@ app.get('/get-room', authMiddleware, async (req, res) => {
 
 
 app.post('/join-room', authMiddleware, async (req, res) => {
-    const roomCode = req.query.roomCode?.toString;
-
+    const roomCode = req.query.roomCode?.toString();
     try {
 
       const result = await  prisma.$transaction(async(tx)=>{
@@ -393,12 +397,21 @@ app.post('/join-room', authMiddleware, async (req, res) => {
                 {
                     where:{
                         roomCode:Number(roomCode)
+                    },
+                    include:{
+                        canvas:true
                     }
-                }
+                },
             )
 
+            if(room &&!room?.active){
+                res.status(400).json("Room is Offline");
+                return
+            }
+
             if(room){
-               const user = prisma.user.update(
+
+               const user =await prisma.user.update(
                 {
                     where:{
                         id:req.userPayload.userId
@@ -408,22 +421,28 @@ app.post('/join-room', authMiddleware, async (req, res) => {
                     }
                 }
                ) 
+
+               console.log(user)
             }
 
             return room;
 
             
 
+        },{
+            maxWait:5000,
+            timeout:100000
         })
 
 
         if(result){
-            res.status(200).json("Joined Successfully");
+            res.status(200).json(result);
         }
 
       
 
     } catch (error) {
+        console.log(error)
         res.status(400).json("Room Expired or Invalid Room code")
     }
 

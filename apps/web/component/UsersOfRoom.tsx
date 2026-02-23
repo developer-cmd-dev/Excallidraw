@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react'
 import {motion} from 'motion/react'
 import { RoomUsers } from './Canvas'
 import { SocketUser } from '@repo/common/types.ts'
+import { Avatar, AvatarBadge, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 
 
 
@@ -10,32 +11,41 @@ import { SocketUser } from '@repo/common/types.ts'
 
 function UsersOfRoom({users}:{users:SocketUser[]}) {
 
-    useEffect(()=>{
-        console.log(users)
-    },[users])
-
+    const [onHover,setOnHover]=useState<{userId:string}>({userId:''})
 
   return (
-    <motion.div
+    <div
    
-    className='absolute border w-fit h-80  rounded-md left-2 flex flex-col  p-4 gap-2'
+    className='absolute  w-30  h-80  rounded-md left-2 flex flex-col  p-4 gap-2'
     >
+
 
 {
     users.map((element)=>(
-        <motion.div
-        whileHover={{
-            width:'160px'
+      <motion.div 
+        whileHover={
+            {
+                width:'190px',
+                backgroundColor:"#94a3b8"
+            }
         }
-    }
-        key={element.userId} className='bg-white p-2 h-15  w-15 rounded-full text-black flex items-center justify-center'>
-            <h1>{element.email[0].toUpperCase()}</h1>
-        </motion.div>
+        onHoverStart={()=>{
+            setOnHover({userId:element.userId})
+        }}
+        onHoverEnd={()=>{
+            setOnHover({userId:''})
+        }}
+      className='w-13 h-13 cursor-pointer bg-gray-300 rounded-3xl rounded-bl-none text-black flex items-center justify-center text-md '>
+        {
+            onHover.userId===element.userId ? <p>@{element.email.replace("@gmail.com",'')}</p>:<p>{element.email[0].toUpperCase()}</p>
+        }
+      </motion.div>    
     ))  
 }
 
 
-    </motion.div>
+
+    </div>
   )
 }
 

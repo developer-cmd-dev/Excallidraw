@@ -5,13 +5,16 @@ import { prisma } from "@repo/db/prisma.ts";
 import "dotenv/config"
 
 
-export async function createRoom(roomCode: string, user: User, rooms: Map<string, Room>, ws: WebSocket):Promise<Room|null> {
+export async function createRoom(roomCode: string, userData: User, rooms: Map<string, Room>, ws: WebSocket):Promise<Room|null> {
 
 
     try {
-        const room = await prisma.room.findUnique({
+        const room = await prisma.room.update({
             where: {
                 roomCode: Number(roomCode)
+            },
+            data:{
+                active:true
             },
             include: {
                 users: {
@@ -24,14 +27,22 @@ export async function createRoom(roomCode: string, user: User, rooms: Map<string
 
         })
 
+        // find the room and update the user here
+
 
         
 
         if (room) {
-            let roomObj = new Room(roomCode, user);
+            let roomObj = new Room(roomCode, userData,[],true);  // create a room 
             room.users.map((data) => {
-                const user = new User(data.id, data.email, null)
-                roomObj.users.push(user);
+
+                if(data.email===userData.email){
+                    roomObj.users.push(userData)
+                }else{
+                    const user = new User(data.id, data.email, null)
+                    roomObj.users.push(user);
+                }
+               
             })
             rooms.set(roomCode, roomObj);
             ws.send(JSON.stringify(
@@ -74,7 +85,6 @@ export function joinRoom(roomCode: string, rooms: Map<string, Room>, ws: WebSock
             return;
         }
 
-        console.log(getRoom)
         getRoom?.setUser(user);
         user.setRoomId(roomCode);
         ws.send(JSON.stringify({
@@ -140,6 +150,13 @@ export async function closeConnection(roomObj:Room|null,rooms:Map<string,Room>,u
                 },
                 data:{
                     active:false
+                },
+                include:{
+                    users:{
+                        omit:{
+                            password:true
+                        }
+                    }
                 }
             })
             console.log(result)

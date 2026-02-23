@@ -31,8 +31,10 @@ function JoinRoomDialog({  accessToken }: Props) {
 
     try {
       setLoading(true);
+      
       const result = await axios.post(
         `${backendUrl}/join-room/?roomCode=${roomCode}`,
+        null,
         {
           headers: {
             Authorization: `Bearer ${accessToken}`
@@ -40,11 +42,13 @@ function JoinRoomDialog({  accessToken }: Props) {
         }
       );
 
-      if (result.status === 200) {
+
+      if (result.status == 200) {
         setRoomStoreData(result.data);
+        setLoading(false);
+        console.log(result.data)
         addCanvas(result.data.canvas[0]);
         router.push(`/canvas/${result.data.canvas[0].id}/join/${result.data.roomCode}`)
-        setLoading(false);
       }
   
 

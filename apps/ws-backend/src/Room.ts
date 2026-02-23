@@ -6,11 +6,13 @@ export default class Room{
     roomId:string;
     owner:User;
     users:User[];
+    active:boolean;
 
-constructor(roomId: string, owner: User, users: User[] = []) {
+constructor(roomId: string, owner: User, users: User[] = [],active:boolean) {
     this.roomId = roomId;
     this.owner = owner;
     this.users = users;
+    this.active=active;
 }
 
 
