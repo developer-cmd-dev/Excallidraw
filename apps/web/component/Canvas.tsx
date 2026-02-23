@@ -13,7 +13,7 @@ import { toast } from 'sonner';
 import { Spinner } from '@/components/ui/spinner';
 import { connectSocket, getSocket } from '../lib/websocket';
 import UsersOfRoom from './UsersOfRoom';
-import { register } from 'module';
+import { Socket } from 'dgram';
 
 
 export interface RoomUsers {
@@ -37,7 +37,8 @@ function Canvas({ authData }: Props) {
     const params = useParams<{slug:string[]}>(); 
     
     const canvasId = params.slug[0];
-    const roomCode = params.slug[1];
+    const eventType = params.slug[1];
+    const roomCode = params.slug[2];
 
 
     const { canvasData } = useCanvasStore((state) => state)
@@ -99,16 +100,32 @@ function Canvas({ authData }: Props) {
        async function socketHandler(){
         const socket =await connectSocket(authData.access_token)
 
-            socket.send(JSON.stringify(
-                {
-                    type:'create-room',
+          if(eventType){
+            if(eventType=='owner'){
+                sendSocketMessage(socket,
+                    {
+                        type:"create-room",
+                        roomCode
+                    }
+
+                )
+            }else if(eventType=='join'){
+                sendSocketMessage(socket,{
+                    type:"join-room",
                     roomCode
-                }
-            ))
+                })
+            }
+
+
+          }
 
             socket.onmessage = (message)=>{
-                const parseMessage = JSON.parse(message.data);
-                setRoomUsers(parseMessage.users)
+                const parseMessage = JSON.parse(message.data) as {type:'create-room'|'joined-room'|'message',data:object};
+                if(parseMessage.type=='create-room'){
+                    // setRoomUsers(parseMessage)
+                }else if(parseMessage.type=='joined-room'){
+
+                }
             }
         }
 
@@ -116,6 +133,10 @@ function Canvas({ authData }: Props) {
 
     },[])
 
+
+    function sendSocketMessage(socket:WebSocket,data:object){
+        socket.send(JSON.stringify(data));
+    }
 
 
 

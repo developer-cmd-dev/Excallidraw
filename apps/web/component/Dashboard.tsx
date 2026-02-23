@@ -12,6 +12,7 @@ import CreatedCanvas from './CreatedCanvas'
 import CreateRoomDialog from './CreateRoomDialog'
 import { useCanvasStore } from '../store/store'
 import { Spinner } from '@/components/ui/spinner'
+import JoinRoomDialog from './JoinRoomDialog'
 
 interface Props {
     authPayload: AuthUserPayload;
@@ -86,6 +87,7 @@ function Dashboard({ authPayload }: Props) {
                     <div className='flex gap-4 p-3 '>
                         <CreateCanvasDialog access_token={authPayload.access_token} type='blank-page' />
                         <CreateRoomDialog accessToken={authPayload.access_token} />
+                        <JoinRoomDialog accessToken={authPayload.access_token}/>
                     </div>
 
                     <div className=' h-full  '>

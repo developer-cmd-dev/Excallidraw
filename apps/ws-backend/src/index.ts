@@ -11,7 +11,7 @@ const wss = new WebSocketServer({
 })
 
 
-const rooms = new Map<number, Room>();
+const rooms = new Map<string, Room>();
 
 
 
@@ -36,35 +36,40 @@ wss.on('connection', async (ws, req) => {
             const message = JSON.parse(data.toString());
             if (message.type === 'create-room') {
                 
-                roomObj = new Room(Number(message.roomCode), user);
+                roomObj = new Room(message.roomCode, user);
                 roomObj.setUser(user);
-                rooms.set(message.room_id, roomObj);
+                rooms.set(message.roomCode, roomObj);
                 ws.send(JSON.stringify(
-                    roomObj.toJson()
+                    {
+                        type:'create-room',
+                        data:roomObj.toJson()
+                    }
                 ))
                 console.log('Room Created..')
             } else if (message.type === 'join-room') {
                 try {
-                    const result = await prisma.room.update({
-                        where:{roomCode:Number(message.room_id)},
-                        data:{
-                            adminId:user.userId
-                        }
-                    })
-                    if (result) {
-                        const getRoom = rooms.get(message.room_id);
+                        const getRoom = rooms.get(message.roomCode);
                         getRoom?.setUser(user);
-                        user.setRoomId(message.room_id);
-                        ws.send('room joined')
-                    }
-
+                        user.setRoomId(message.roomCode);
+                        ws.send(JSON.stringify(getRoom?.toJson()));
+                        getRoom?.users.forEach((user)=>{
+                            if(user.socket != ws){
+                                user.socket.send(JSON.stringify(
+                                    {
+                                        type:'joined-user',
+                                        data:user.toJson()
+                                    }
+                                ))
+                            }
+                        })
+                        console.log('room joined')
                 } catch (error) {
                     console.log(error);
-                    ws.close()
+                ws.close()
                 }
 
             }else if(message.type==='get-users'){
-               const findRoom =  rooms.get(Number(message.roomCode))
+               const findRoom =  rooms.get(message.roomCode)
                if(!findRoom){
                 ws.send("Expired Room");
                 return;
@@ -75,7 +80,7 @@ wss.on('connection', async (ws, req) => {
                ws.send(JSON.stringify(users))
                
             }else if (message.type === 'message') {
-                const getRoom = rooms.get(message.room_id);
+                const getRoom = rooms.get(message.roomCode);
                 if (getRoom) {
                     getRoom.users.forEach((users) => {
                         if (users !== user) {

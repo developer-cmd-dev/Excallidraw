@@ -52,7 +52,6 @@ export function initDraw(rc: RoughCanvas, canvas: HTMLCanvasElement, access_toke
 
     canvas.addEventListener('mousemove', (e) => {
         if (clicked) {
-
             if (rectObj && drawingType == 'rec') {
                 const width = e.clientX - rectObj.x;
                 const height = e.clientY - rectObj.y;

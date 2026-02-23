@@ -16,23 +16,22 @@ interface Props {
   accessToken: string;
 }
 
-function CreateRoomDialog({  accessToken }: Props) {
+function JoinRoomDialog({  accessToken }: Props) {
 
   const [open, setOpen] = useState(false)
-  const [name, setName] = useState('')
+  const [roomCode, setRoomCode] = useState('')
   const [loading, setLoading] = useState(false);
   const backendUrl = process.env.NEXT_BACKEND_URL;
   const router = useRouter();
   const { roomStoreData, setRoomStoreData } = useRoomStore((state) => state)
   const {addCanvas}=useCanvasStore(state=>state)
 
-  const createRoom = async () => {
+  const joinRoom = async () => {
 
     try {
       setLoading(true);
-      const result = await axios.post(
-        `${backendUrl}/create-room`,
-        { name: name },
+      const result = await axios.get(
+        `${backendUrl}/get-room/?roomCode=${roomCode}`,
         {
           headers: {
             Authorization: `Bearer ${accessToken}`
@@ -43,7 +42,7 @@ function CreateRoomDialog({  accessToken }: Props) {
       if (result.status === 200) {
         setRoomStoreData(result.data);
         addCanvas(result.data.canvas[0]);
-        router.push(`/canvas/${result.data.canvas[0].id}/owner/${result.data.roomCode}`)
+        router.push(`/canvas/${result.data.canvas[0].id}/join/${result.data.roomCode}`)
         setLoading(false);
       }
   
@@ -71,21 +70,24 @@ function CreateRoomDialog({  accessToken }: Props) {
             <div className='w-full h-3/4 flex items-center justify-center'>
               <svg xmlns="http://www.w3.org/2000/svg" width="45" height="45" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="0.5" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-users-icon lucide-users"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><path d="M16 3.128a4 4 0 0 1 0 7.744" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><circle cx="9" cy="7" r="4" /></svg>
             </div>
-            <p>Create Team</p>
+            <p>Join Team</p>
           </Button>
 
         </DialogTrigger>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>Create Workspace</DialogTitle>
+            <DialogTitle>Join Workspace</DialogTitle>
             <DialogDescription>
-              Create a new collaborative workspace for your team. Enter a name below and click "Save changes" to create and join the workspace.
+             
+              Enter your workspace code below and click "Save changes" to join an existing collaborative workspace with your team. 
+              If you do not have a code, ask your team admin to share the workspace invitation code.
+            
             </DialogDescription>
           </DialogHeader>
           <FieldGroup>
             <Field>
-              <Label htmlFor="name-1">Name</Label>
-              <Input id="name-1" name="name" value={name} onChange={(e) => setName(e.target.value)} />
+              <Label htmlFor="name-1">Room Code</Label>
+              <Input id="name-1" name="name" value={roomCode} onChange={(e) => setRoomCode(e.target.value)} />
             </Field>
 
           </FieldGroup>
@@ -93,7 +95,7 @@ function CreateRoomDialog({  accessToken }: Props) {
             <DialogClose asChild>
               <Button variant="outline">Cancel</Button>
             </DialogClose>
-            <Button onClick={createRoom}>{loading ? <Spinner /> : "Save changes"}</Button>
+            <Button onClick={joinRoom}>{loading ? <Spinner /> : "Save changes"}</Button>
           </DialogFooter>
         </DialogContent>
       </form>
@@ -101,4 +103,4 @@ function CreateRoomDialog({  accessToken }: Props) {
   )
 }
 
-export default CreateRoomDialog
+export default JoinRoomDialog

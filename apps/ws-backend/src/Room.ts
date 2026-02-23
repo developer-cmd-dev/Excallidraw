@@ -3,11 +3,11 @@ import User from "./User";
 
 export default class Room{
 
-    roomId:number;
+    roomId:string;
     owner:User;
     users:User[];
 
-constructor(roomId: number, owner: User, users: User[] = []) {
+constructor(roomId: string, owner: User, users: User[] = []) {
     this.roomId = roomId;
     this.owner = owner;
     this.users = users;
