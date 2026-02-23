@@ -1,17 +1,24 @@
 "use client"
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import {motion} from 'motion/react'
 import { RoomUsers } from './Canvas'
+import { SocketUser } from '@repo/common/types.ts'
 
 
 
 
 
-function UsersOfRoom({users}:{users:RoomUsers[]}) {
+function UsersOfRoom({users}:{users:SocketUser[]}) {
+
+    useEffect(()=>{
+        console.log(users)
+    },[users])
+
+
   return (
     <motion.div
    
-    className='absolute w-fit h-80  rounded-md left-2 flex flex-col  p-4 justify-between'
+    className='absolute border w-fit h-80  rounded-md left-2 flex flex-col  p-4 gap-2'
     >
 
 {

@@ -5,7 +5,9 @@ import { JWT_SECRET } from '@repo/backend-common/config.ts';
 import User from './User';
 import Room from './Room';
 import { prisma } from '@repo/db/prisma.ts';
-import {URL} from 'url'
+import { URL } from 'url'
+import { doesNotMatch } from 'assert';
+import { closeConnection, createRoom, getUser, joinRoom, sendMessage } from './service';
 const wss = new WebSocketServer({
     port: 8080
 })
@@ -17,9 +19,9 @@ const rooms = new Map<string, Room>();
 
 wss.on('connection', async (ws, req) => {
 
-    
+
     const url = `ws://localhost:8080${req.url?.toString()}`;
-    
+
     const urlObj = new URL(url);
     const token = urlObj.searchParams.get('token');
 
@@ -35,75 +37,24 @@ wss.on('connection', async (ws, req) => {
         ws.on('message', async (data) => {
             const message = JSON.parse(data.toString());
             if (message.type === 'create-room') {
-                
-                roomObj = new Room(message.roomCode, user);
-                roomObj.setUser(user);
-                rooms.set(message.roomCode, roomObj);
-                ws.send(JSON.stringify(
-                    {
-                        type:'create-room',
-                        data:roomObj.toJson()
-                    }
-                ))
-                console.log('Room Created..')
+                const data =await createRoom(message.roomCode, user, rooms, ws) // create room functions
+                if(data){
+                    roomObj=data;
+                }
             } else if (message.type === 'join-room') {
-                try {
-                        const getRoom = rooms.get(message.roomCode);
-                        getRoom?.setUser(user);
-                        user.setRoomId(message.roomCode);
-                        ws.send(JSON.stringify(getRoom?.toJson()));
-                        getRoom?.users.forEach((user)=>{
-                            if(user.socket != ws){
-                                user.socket.send(JSON.stringify(
-                                    {
-                                        type:'joined-user',
-                                        data:user.toJson()
-                                    }
-                                ))
-                            }
-                        })
-                        console.log('room joined')
-                } catch (error) {
-                    console.log(error);
-                ws.close()
-                }
 
-            }else if(message.type==='get-users'){
-               const findRoom =  rooms.get(message.roomCode)
-               if(!findRoom){
-                ws.send("Expired Room");
-                return;
-               }
+                joinRoom(message.roomCode, rooms, ws, user) // join room function
+            } else if (message.type === 'get-users') {
 
-                const users=findRoom.users.map((value)=>value.toJson())
+                getUser(rooms, message.roomCode, ws); // get users from the room
 
-               ws.send(JSON.stringify(users))
-               
-            }else if (message.type === 'message') {
-                const getRoom = rooms.get(message.roomCode);
-                if (getRoom) {
-                    getRoom.users.forEach((users) => {
-                        if (users !== user) {
-                            users.socket.send(message.data);
-                        }
-                    })
-                }
-            }
+            } else if (message.type === 'message') {
+                sendMessage(rooms,message.roomCode,user,message.data); // send message
+            }       
         })
 
         ws.on('close', () => {
-            if (roomObj) {
-                rooms.delete(roomObj.roomId);
-                console.log('Room closed')
-            } else {
-                if (user.roomId) {
-                    const getRoom = rooms.get(user.roomId);
-                    if (getRoom) {
-                        getRoom.deleteUser(user);
-                        console.log('User left')
-                    }
-                }
-            }
+            closeConnection(roomObj,rooms,user);
         })
     }
 
@@ -138,3 +89,6 @@ async function authUser(token: string, ws: WebSocket): Promise<User | null> {
 
 
 }
+
+
+

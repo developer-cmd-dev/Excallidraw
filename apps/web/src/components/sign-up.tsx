@@ -195,7 +195,7 @@ export default function SignupForm({className}:Props) {
                             asChild
                             variant="link"
                             className="px-2">
-                            <Link href="#">Sign In</Link>
+                            <Link href="/signin">Sign In</Link>
                         </Button>
                     </p>
                 </div>

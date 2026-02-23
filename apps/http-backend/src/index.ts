@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken'
 import { JWT_SECRET } from "@repo/backend-common/config.ts";
 import { authMiddleware } from './middleware.js';
 
-import {  CreateUserZodSchema, SignUpUser } from '@repo/common/types.ts';
+import { CreateUserZodSchema, SignUpUser } from '@repo/common/types.ts';
 import { prisma } from '@repo/db/prisma.ts';
 import bycrypt, { hash } from 'bcrypt';
 import bodyparser from 'body-parser';
@@ -13,7 +13,7 @@ import cookieParser from 'cookie-parser'
 
 import redisClient from '@repo/backend-common/redis.ts'
 import _, { chain, result } from 'lodash'
-import { ParseStatus } from 'zod/v3';
+
 
 
 const app = express();
@@ -71,7 +71,7 @@ app.post('/google-auth', async (req, res) => {
     const { name, email } = req.body;
 
     try {
-        const checkUserExist = await prisma.user.findUnique({ where: { email }, include: { rooms: true, canvas: true } });
+        const checkUserExist = await prisma.user.findUnique({ where: { email }, include: { canvas: true } });
         if (checkUserExist) {
             const token = jwt.sign({ userId: checkUserExist.id, email: checkUserExist.email }, JWT_SECRET, { expiresIn: 60 * 1000 });
             const responseData = {
@@ -86,12 +86,9 @@ app.post('/google-auth', async (req, res) => {
 
             data: {
                 email,
-                name
+                name,
             },
-            include: {
-                rooms: true,
 
-            }
         })
 
         res.status(200).json("User created successfully");
@@ -114,13 +111,11 @@ app.post('/signin', async (req, res) => {
         const getUserFromDb = await prisma.user.findUnique({
             where: { email: body.email },
             include: {
-                rooms: true,
                 canvas: true,
             }
 
         });
 
-        console.log(getUserFromDb)
 
 
         if (!getUserFromDb) {
@@ -156,19 +151,19 @@ app.get('/canvas', authMiddleware, async (req, res) => {
         if (cache && JSON.parse(cache).length > 0) {
             res.status(200).json(JSON.parse(cache));
         } else {
-            const result = await prisma.user.findUnique({ where: { id: req.userPayload.userId },
-   
-            include:{
-                canvas:true,
-                rooms:true,
-                
-            },
-            omit:{
-                password:true
-            }
-           
+            const result = await prisma.user.findUnique({
+                where: { id: req.userPayload.userId },
+
+                include: {
+                    canvas: true,
+
+                },
+                omit: {
+                    password: true
+                }
+
             });
-            redisClient.set(req.userPayload.userId, JSON.stringify(result), { expiration: { type: 'EX', value: 60 } });
+            redisClient.set(req.userPayload.userId, JSON.stringify(result), { expiration: { type: 'EX', value: 6000 } });
             res.status(200).json(result)
         }
     } catch (error) {
@@ -214,7 +209,7 @@ app.post('/blank-canvas', authMiddleware, async (req, res) => {
 
 app.delete('/delete-canvas', authMiddleware, async (req, res) => {
 
-    const canvasId = req.query.canvasId?.toString();    
+    const canvasId = req.query.canvasId?.toString();
     try {
         if (!canvasId) {
             res.status(400).json("Invalid id");
@@ -323,27 +318,43 @@ app.post('/create-room', authMiddleware, async (req, res) => {
     try {
 
         const roomCode = Math.floor(Math.random() * 10000);
+        console.log(req.body, roomCode)
 
-        const roomResult = await prisma.room.create({
-            data: {
-                name: body.name,
-                roomCode,
-                adminId: req.userPayload.userId,
-                canvas:{
-                    create:[{
-                        name:body.name,
-                        userId:req.userPayload.userId,
-                        canvasType:"WORKSPACE",
-                    }]
-                }
-            },
-            include:{canvas:true}
-        })
+        const result =await    prisma.$transaction(async(tx)=>{
+                const room =await tx.room.create({
+                    data: {
+                        name: body.name,
+                        roomCode,
+                        adminId: req.userPayload.userId,
+                        canvas: {
+                            create: [{
+                                name: body.name,
+                                userId: req.userPayload.userId,
+                                canvasType: "WORKSPACE",
+                            }]
+                        },
+                    },
+                    include: { canvas: true }
+                })
 
-  
+                const user =await tx.user.update({
+                    where:{
+                        id:req.userPayload.userId
+                    },
+                    data:{
+                        roomId:room.roomCode
+                    }
+                })
+
+                return room;
 
 
-        res.status(200).json(roomResult);
+            })
+
+
+
+            res.status(200).json(result);
+
 
 
     } catch (error) {
@@ -355,20 +366,67 @@ app.post('/create-room', authMiddleware, async (req, res) => {
 })
 
 
-app.get('/get-room',authMiddleware,async(req,res)=>{
+app.get('/get-room', authMiddleware, async (req, res) => {
     const roomCode = req.query.roomCode?.toString()
 
-
-    if(!roomCode){
-        res.status(400).json("invalid room code");
-        return
-    }
     try {
-      const result = await  prisma.room.findUnique({where:{roomCode:Number(roomCode)},include:{canvas:true}});
-      res.status(200).json(result)
+        const result = await prisma.room.findUnique({ where: { roomCode: Number(roomCode) }, include: { canvas: true } });
+        if (!result) {
+            res.status(400).json("Invalid Room code");
+            return;
+        }
+        res.status(200).json(result)
     } catch (error) {
-        res.status(500).json("Internal Server Error");
+        res.status(400).json("Invalid Room Code");
     }
+})
+
+
+app.post('/join-room', authMiddleware, async (req, res) => {
+    const roomCode = req.query.roomCode?.toString;
+
+    try {
+
+      const result = await  prisma.$transaction(async(tx)=>{
+
+           const room=await tx.room.findUnique(
+                {
+                    where:{
+                        roomCode:Number(roomCode)
+                    }
+                }
+            )
+
+            if(room){
+               const user = prisma.user.update(
+                {
+                    where:{
+                        id:req.userPayload.userId
+                    },
+                    data:{
+                        roomId:room.roomCode
+                    }
+                }
+               ) 
+            }
+
+            return room;
+
+            
+
+        })
+
+
+        if(result){
+            res.status(200).json("Joined Successfully");
+        }
+
+      
+
+    } catch (error) {
+        res.status(400).json("Room Expired or Invalid Room code")
+    }
+
 })
 
 

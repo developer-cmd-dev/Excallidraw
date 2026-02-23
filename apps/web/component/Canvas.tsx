@@ -6,12 +6,12 @@ import rough from 'roughjs'
 import axios, { Axios, AxiosError } from 'axios';
 import { initDraw, redo, renderExistingCanvas, ShapesType, undo } from '../draw/drawingLogic'
 import { handleType } from '../draw/drawingLogic';
-import { AuthUserPayload } from '@repo/common/types.ts';
+import { AuthUserPayload, CreateRoom, EmitMessage, JoinRoom, SocketErrorMessage, SocketUser, WebSocketMessage } from '@repo/common/types.ts';
 import { useParams, useRouter } from 'next/navigation';
 import { useCanvasStore, useRoomStore } from '../store/store';
 import { toast } from 'sonner';
 import { Spinner } from '@/components/ui/spinner';
-import { connectSocket, getSocket } from '../lib/websocket';
+import { connectSocket } from '../lib/websocket';
 import UsersOfRoom from './UsersOfRoom';
 import { Socket } from 'dgram';
 
@@ -34,8 +34,8 @@ function Canvas({ authData }: Props) {
     const [innerHeight, setInnerHeight] = useState(300);
     const [innerWidth, setInnerWidth] = useState(100);
     const [drawingTabs, setDrawingTabs] = useState(0);
-    const params = useParams<{slug:string[]}>(); 
-    
+    const params = useParams<{ slug: string[] }>();
+
     const canvasId = params.slug[0];
     const eventType = params.slug[1];
     const roomCode = params.slug[2];
@@ -43,10 +43,10 @@ function Canvas({ authData }: Props) {
 
     const { canvasData } = useCanvasStore((state) => state)
     const [loading, setLoading] = useState(false);
-    const { roomStoreData ,setRoomStoreData} = useRoomStore((state) => state);
-    const [roomUsers, setRoomUsers] = useState<RoomUsers[]>([]);
+    const { roomStoreData, setRoomStoreData } = useRoomStore((state) => state);
+    const [roomUsers, setRoomUsers] = useState<SocketUser[]>([]);
     const router = useRouter();
-    const [ws,setWs]=useState<WebSocket|null>(null)
+    const [ws, setWs] = useState<WebSocket | null>(null)
 
 
     //render and load canvas
@@ -96,45 +96,64 @@ function Canvas({ authData }: Props) {
     }, [canvasData])
 
 
-    useEffect(()=>{
-       async function socketHandler(){
-        const socket =await connectSocket(authData.access_token)
+    useEffect(() => {
+        async function socketHandler() {
+            const socket = await connectSocket(authData.access_token)
 
-          if(eventType){
-            if(eventType=='owner'){
-                sendSocketMessage(socket,
-                    {
-                        type:"create-room",
-                        roomCode
+            
+                if (eventType) {
+                    if (eventType == 'owner') {
+                        sendSocketMessage(socket,
+                            {
+                                type: "create-room",
+                                roomCode
+                            }
+
+                        )
+                        toast.message("Loading...")
+                    } else if (eventType == 'join') {
+                        sendSocketMessage(socket, {
+                            type: "join-room",
+                            roomCode
+                        })
                     }
 
-                )
-            }else if(eventType=='join'){
-                sendSocketMessage(socket,{
-                    type:"join-room",
-                    roomCode
-                })
-            }
-
-
-          }
-
-            socket.onmessage = (message)=>{
-                const parseMessage = JSON.parse(message.data) as {type:'create-room'|'joined-room'|'message',data:object};
-                if(parseMessage.type=='create-room'){
-                    // setRoomUsers(parseMessage)
-                }else if(parseMessage.type=='joined-room'){
 
                 }
-            }
+
+                socket.onmessage = (message) => {
+                    const parseMessage = JSON.parse(message.data) as WebSocketMessage;
+                    console.log(parseMessage)
+                    if (parseMessage.type == 'create-room') {
+                        const data = parseMessage.data as CreateRoom;
+                        setRoomUsers(data.users)
+                        toast.message("Workspace Created")
+                    } else if (parseMessage.type == 'join-room') {
+                        const data = parseMessage.data as JoinRoom;
+                        setRoomUsers(data.users);
+                    }
+                    else if (parseMessage.type == 'emit-message') {
+                        const data = parseMessage.data as SocketUser;
+                        setRoomUsers((prev) => [...prev, data])
+                    } else if (parseMessage.type == 'error') {
+                        const data = parseMessage.data as SocketErrorMessage;
+                        console.log(data.message)
+                        toast.error(data.message);
+                        router.back();
+                        socket.close();
+                    }
+                }
+           
         }
 
-     roomCode &&  socketHandler()
+        roomCode && socketHandler().catch((error)=>{
+            router.back()
+        })
 
-    },[])
+    }, [])
 
 
-    function sendSocketMessage(socket:WebSocket,data:object){
+    function sendSocketMessage(socket: WebSocket, data: object) {
         socket.send(JSON.stringify(data));
     }
 
@@ -155,45 +174,45 @@ function Canvas({ authData }: Props) {
 
 
 
-        //handle drawing tab switches
-        const handleKeys = useCallback((event: KeyboardEvent) => {
-            const key = Number(event.key);
-            if (key >= 1 && key <= 5) {
-                setDrawingTabs(key)
-                const getType = shape.find((elem) => elem.keyBind == key);
-                if (getType) {
-                    handleType(getType?.type)
-                }
+    //handle drawing tab switches
+    const handleKeys = useCallback((event: KeyboardEvent) => {
+        const key = Number(event.key);
+        if (key >= 1 && key <= 5) {
+            setDrawingTabs(key)
+            const getType = shape.find((elem) => elem.keyBind == key);
+            if (getType) {
+                handleType(getType?.type)
             }
-        }, [])
-    
-    
-        //handle undo and redo
-        const handleUndoRedo = useCallback((e: KeyboardEvent) => {
-            const isCtrlKeyPressed = e.ctrlKey;
-    
-            const isZkeyPressed = e.key == 'z';
-            const isYkeyPressed = e.key == 'y';
-            if (isCtrlKeyPressed && isZkeyPressed) {
-                undo()
-            } else if (isCtrlKeyPressed && isYkeyPressed) {
-                redo()
-            }
-        }, [])
-    
-    
-    
-        useEffect(() => {
-    
-            if (typeof window !== 'undefined') {
-                window.addEventListener('keypress', handleKeys);
-                window.addEventListener('keydown', handleUndoRedo)
-            }
-        }, [handleKeys])
-    
-    
+        }
+    }, [])
 
-  
+
+    //handle undo and redo
+    const handleUndoRedo = useCallback((e: KeyboardEvent) => {
+        const isCtrlKeyPressed = e.ctrlKey;
+
+        const isZkeyPressed = e.key == 'z';
+        const isYkeyPressed = e.key == 'y';
+        if (isCtrlKeyPressed && isZkeyPressed) {
+            undo()
+        } else if (isCtrlKeyPressed && isYkeyPressed) {
+            redo()
+        }
+    }, [])
+
+
+
+    useEffect(() => {
+
+        if (typeof window !== 'undefined') {
+            window.addEventListener('keypress', handleKeys);
+            window.addEventListener('keydown', handleUndoRedo)
+        }
+    }, [handleKeys])
+
+
+
+
 
 
 

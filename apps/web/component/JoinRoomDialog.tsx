@@ -7,10 +7,11 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import { useRouter } from 'next/navigation';
 import { useCanvasStore, useRoomStore } from '../store/store';
 import { connectSocket } from '../lib/websocket';
+import { toast } from 'sonner';
 
 interface Props {
   accessToken: string;
@@ -30,8 +31,8 @@ function JoinRoomDialog({  accessToken }: Props) {
 
     try {
       setLoading(true);
-      const result = await axios.get(
-        `${backendUrl}/get-room/?roomCode=${roomCode}`,
+      const result = await axios.post(
+        `${backendUrl}/join-room/?roomCode=${roomCode}`,
         {
           headers: {
             Authorization: `Bearer ${accessToken}`
@@ -48,8 +49,10 @@ function JoinRoomDialog({  accessToken }: Props) {
   
 
     } catch (error) {
-      console.log(error);
-      setLoading(false)
+    if(error instanceof AxiosError){
+        toast.error(error.response?.data);
+        setLoading(false)
+    }
     }
 
 

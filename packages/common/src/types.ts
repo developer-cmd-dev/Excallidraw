@@ -80,3 +80,40 @@ export type Drawings={
     height:number,
     canvasId:string
 }
+
+
+
+type messageType='create-room'|'join-room'|'message'|'error'|'emit-message';
+
+export type SocketUser = {
+    userId: string;
+    email: string;
+    roomId: string;
+}
+
+export type CreateRoom = {
+    type:string;
+    roomId:string,
+    owner:SocketUser,
+    users:SocketUser[]
+}
+
+export type JoinRoom = {
+    type:string;
+    roomId:string,
+    owner:SocketUser,
+    users:SocketUser[]
+}
+
+export type SocketErrorMessage = {
+    message:string;
+}
+
+export type EmitMessage = {
+    data:SocketUser
+}
+
+export interface WebSocketMessage{
+    type:messageType;
+    data:CreateRoom|SocketErrorMessage|JoinRoom|SocketUser;
+}
