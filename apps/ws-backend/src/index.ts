@@ -74,7 +74,7 @@ async function authUser(token: string, ws: WebSocket): Promise<User | null> {
         const extractedToken = token.replace('Bearer ', "");
 
         const payload = jwt.verify(extractedToken, JWT_SECRET) as { userId: string, email: string };
-        return new User(payload.userId, payload.email, ws);
+        return new User(payload.userId, payload.email, ws,true);
     } catch (error) {
         if (error instanceof JsonWebTokenError) {
             ws.send(error.message);

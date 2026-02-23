@@ -37,9 +37,12 @@ export async function createRoom(roomCode: string, userData: User, rooms: Map<st
             room.users.map((data) => {
 
                 if(data.email===userData.email){
+                    
+                    userData.setRoomId(roomCode)
                     roomObj.users.push(userData)
                 }else{
-                    const user = new User(data.id, data.email, null)
+                    const user = new User(data.id, data.email, null,false)
+                    user.setRoomId(roomCode)
                     roomObj.users.push(user);
                 }
                
@@ -85,12 +88,31 @@ export function joinRoom(roomCode: string, rooms: Map<string, Room>, ws: WebSock
             return;
         }
 
+
+       const checkUser= getRoom.users.filter((x)=>x.email===user.email)
+       if(checkUser && checkUser.length>0){
+        getRoom.users.forEach((data)=>{
+            if(data.email === user.email && data.socket==null){
+                data.socket=ws;
+                data.active=true
+                data.setRoomId(roomCode);
+            }
+
+        })
+
+        getRoom.users.forEach((data)=>{
+            if(data.email!=user.email && data.socket){
+                data.socket.send(JSON.stringify({
+                    type:'active-status',
+                    data:getRoom.users.map((data)=>data.toJson())
+                }))
+            }
+        })
+
+       }else{
+        
         getRoom?.setUser(user);
         user.setRoomId(roomCode);
-        ws.send(JSON.stringify({
-            type: 'join-room',
-            data: getRoom?.toJson()
-        }));
         getRoom?.users.forEach((data) => {
             if (data.email != user.email) {
                if(data.socket){
@@ -104,6 +126,14 @@ export function joinRoom(roomCode: string, rooms: Map<string, Room>, ws: WebSock
 
             }
         })
+       }
+
+       
+        ws.send(JSON.stringify({
+            type: 'join-room',
+            data: getRoom?.toJson()
+        }));
+        
         console.log('room joined')
     } catch (error) {
         console.log(error);
@@ -142,7 +172,6 @@ export function sendMessage(rooms: Map<string, Room>, roomCode: string, user: Us
 
 export async function closeConnection(roomObj:Room|null,rooms:Map<string,Room>,user:User){
     if (roomObj) {
-
         try {
           const result = await  prisma.room.update({
                 where:{
@@ -159,7 +188,6 @@ export async function closeConnection(roomObj:Room|null,rooms:Map<string,Room>,u
                     }
                 }
             })
-            console.log(result)
             if(result)
             rooms.delete(roomObj.roomId);
             console.log('Room closed')
@@ -173,8 +201,22 @@ export async function closeConnection(roomObj:Room|null,rooms:Map<string,Room>,u
         if (user.roomId) {
             const getRoom = rooms.get(user.roomId);
             if (getRoom) {
-                getRoom.deleteUser(user);
-                console.log('User left')
+                getRoom.users.forEach((data)=>{
+                    if(data.email==user.email){
+                        data.active=false;
+                    }
+                })
+
+                getRoom.users.forEach((data)=>{
+                    if(data.email!=user.email){
+                        data.socket?.send(JSON.stringify({
+                            type:'active-status',
+                            data:getRoom.users.map((data)=>data.toJson())
+                        }))
+                    }
+                })
+
+                console.log(getRoom, 'from left joined user')
             }
         }
     }

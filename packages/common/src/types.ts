@@ -84,12 +84,13 @@ export type Drawings={
 
 
 
-type messageType='create-room'|'join-room'|'message'|'error'|'emit-message';
+type messageType='create-room'|'join-room'|'message'|'error'|'emit-message'|'active-status';
 
 export type SocketUser = {
     userId: string;
     email: string;
     roomId: string;
+    active:boolean
 }
 
 export type CreateRoom = {
@@ -114,7 +115,12 @@ export type EmitMessage = {
     data:SocketUser
 }
 
+export interface ActiveStatus{
+    type:"active-status",
+    data:SocketUser[]
+}
+
 export interface WebSocketMessage{
     type:messageType;
-    data:CreateRoom|SocketErrorMessage|JoinRoom|SocketUser;
+    data:CreateRoom|SocketErrorMessage|JoinRoom|SocketUser|SocketUser[];
 }

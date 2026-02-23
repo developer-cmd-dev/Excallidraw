@@ -6,7 +6,7 @@ import rough from 'roughjs'
 import axios, { Axios, AxiosError } from 'axios';
 import { initDraw, redo, renderExistingCanvas, ShapesType, undo } from '../draw/drawingLogic'
 import { handleType } from '../draw/drawingLogic';
-import { AuthUserPayload, CreateRoom, EmitMessage, JoinRoom, SocketErrorMessage, SocketUser, WebSocketMessage } from '@repo/common/types.ts';
+import { ActiveStatus, AuthUserPayload, CreateRoom, EmitMessage, JoinRoom, SocketErrorMessage, SocketUser, WebSocketMessage } from '@repo/common/types.ts';
 import { useParams, useRouter } from 'next/navigation';
 import { useCanvasStore, useRoomStore } from '../store/store';
 import { toast } from 'sonner';
@@ -138,10 +138,13 @@ function Canvas({ authData }: Props) {
                         setRoomUsers((prev) => [...prev, data])
                     } else if (parseMessage.type == 'error') {
                         const data = parseMessage.data as SocketErrorMessage;
-                        console.log(data.message)
                         toast.error(data.message);
                         router.back();
                         socket.close();
+                    }else if(parseMessage.type==='active-status'){
+                        const data=parseMessage.data as SocketUser[];
+                        console.log(data)
+                        setRoomUsers(data)
                     }
                 }
            
