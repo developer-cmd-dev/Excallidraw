@@ -1,4 +1,5 @@
 
+let socket:WebSocket|null=null;
 
 
 export const connectSocket = (token: string): Promise<WebSocket> => {
@@ -6,7 +7,9 @@ export const connectSocket = (token: string): Promise<WebSocket> => {
 
      
         const ws = new WebSocket(`ws://localhost:8080/?token=${token}`);
+        socket=ws;
         if (ws.readyState == WebSocket.OPEN) {
+            socket=ws
             resolve(ws);
         }
 
@@ -18,8 +21,16 @@ export const connectSocket = (token: string): Promise<WebSocket> => {
             console.log(error)
             reject(error)
         }
+
+        
+
+      
    
     })
 }
 
 
+
+export function getSocket():WebSocket|null{
+   return socket
+}

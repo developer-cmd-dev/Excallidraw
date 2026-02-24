@@ -1,19 +1,20 @@
 "use client"
 
 import React, { useCallback, useEffect, useRef, useState, } from 'react'
-import { Circle, Diamond, Minus, MoveRight, RectangleHorizontal, } from 'lucide-react'
+import { Circle, ConstructionIcon, Diamond, Minus, MoveRight, RectangleHorizontal, } from 'lucide-react'
 import rough from 'roughjs'
 import axios, { Axios, AxiosError } from 'axios';
-import { initDraw, redo, renderExistingCanvas, ShapesType, undo } from '../draw/drawingLogic'
+import { initDraw, redo, renderExistingCanvas, ShapesType, undo, websocketOperation } from '../draw/drawingLogic'
 import { handleType } from '../draw/drawingLogic';
 import { ActiveStatus, AuthUserPayload, CreateRoom, EmitMessage, JoinRoom, SocketErrorMessage, SocketUser, WebSocketMessage } from '@repo/common/types.ts';
 import { useParams, useRouter } from 'next/navigation';
 import { useCanvasStore, useRoomStore } from '../store/store';
 import { toast } from 'sonner';
 import { Spinner } from '@/components/ui/spinner';
-import { connectSocket } from '../lib/websocket';
+import { connectSocket, getSocket } from '../lib/websocket';
 import UsersOfRoom from './UsersOfRoom';
 import { Socket } from 'dgram';
+import CurstomCursor from './CurstomCursor';
 
 
 export interface RoomUsers {
@@ -47,14 +48,15 @@ function Canvas({ authData }: Props) {
     const [roomUsers, setRoomUsers] = useState<SocketUser[]>([]);
     const router = useRouter();
     const [ws, setWs] = useState<WebSocket | null>(null)
-
+    const [cursorPosition,setCursorPosition]=useState<{x:number,y:number}>({x:0,y:0})
+    const [whichUserDrawing,setWhichUserDrawing]=useState('')
 
     //render and load canvas
     useEffect(() => {
         if (!canvaRef.current) return;
         const rc = rough.canvas(canvaRef.current);
         try {
-            initDraw(rc, canvaRef.current, authData.access_token, String(canvasId));
+            initDraw(rc, canvaRef.current, authData.access_token, String(canvasId), roomCode ?{roomCode}:null);
 
         } catch (error) {
             if (error instanceof AxiosError) {
@@ -99,7 +101,8 @@ function Canvas({ authData }: Props) {
     useEffect(() => {
         async function socketHandler() {
             const socket = await connectSocket(authData.access_token)
-
+            setWs(socket);
+            sendLiveEventMessage(socket,roomCode)
             
                 if (eventType) {
                     if (eventType == 'owner') {
@@ -123,7 +126,6 @@ function Canvas({ authData }: Props) {
 
                 socket.onmessage = (message) => {
                     const parseMessage = JSON.parse(message.data) as WebSocketMessage;
-                    console.log(parseMessage)
                     if (parseMessage.type == 'create-room') {
                         const data = parseMessage.data as CreateRoom;
                         setRoomUsers(data.users)
@@ -145,6 +147,11 @@ function Canvas({ authData }: Props) {
                         const data=parseMessage.data as SocketUser[];
                         console.log(data)
                         setRoomUsers(data)
+                    }else if(parseMessage.type==='message'){
+                        //@ts-ignore
+                        setCursorPosition(parseMessage.data.cursorPosition)
+                        //@ts-ignore
+                        setWhichUserDrawing(parseMessage.email)
                     }
                 }
            
@@ -157,8 +164,13 @@ function Canvas({ authData }: Props) {
     }, [])
 
 
-    function sendSocketMessage(socket: WebSocket, data: object) {
-        socket.send(JSON.stringify(data));
+    function sendSocketMessage(socket: WebSocket,data:object) {
+        socket.send(JSON.stringify(data))
+    }
+
+
+    function sendLiveEventMessage(socket:WebSocket,roomCode:string){
+            console.log(getSocket())
     }
 
 
@@ -224,43 +236,50 @@ function Canvas({ authData }: Props) {
 
     return (
 
+  
         <div className='relative h-screen w-full bg-neutral-900 overflow-hidden flex items-center justify-center'>
 
-            {/* menubar */}
-            <div className='absolute z-10 p-1 top-5 left-1/2 transform -translate-x-1/2 h-10 w-100 flex items-center justify-center gap-3 rounded-full bg-zinc-700'>
+        {/* menubar */}
+        <div className='absolute z-10 p-1 top-5 left-1/2 transform -translate-x-1/2 h-10 w-100 flex items-center justify-center gap-3 rounded-full bg-zinc-700'>
 
-                {
-                    shape.map((elem) => (
-                        <span
-                            title={elem.type}
-                            onClick={(e) => {
-                                handleType(elem.type)
-                                setDrawingTabs(elem.keyBind)
-                            }}
-                            className={` relative hover:bg-slate-500 cursor-pointer  h-full w-fit p-2 px-4  flex items-center justify-center text-white rounded-xl`}
-                            key={elem.type}
-                            style={{
-                                backgroundColor: drawingTabs == elem.keyBind ? "#64748b" : ""
-                            }}
+            {
+                shape.map((elem) => (
+                    <span
+                        title={elem.type}
+                        onClick={(e) => {
+                            handleType(elem.type)
+                            setDrawingTabs(elem.keyBind)
+                        }}
+                        className={` relative hover:bg-slate-500 cursor-pointer  h-full w-fit p-2 px-4  flex items-center justify-center text-white rounded-xl`}
+                        key={elem.type}
+                        style={{
+                            backgroundColor: drawingTabs == elem.keyBind ? "#64748b" : ""
+                        }}
 
-                        >
-                            {elem.icon}
-                            <p className='text-[12px] absolute bottom-0 right-2'>{elem.keyBind}</p>
-                        </span>
-                    ))
-                }
-
-            </div>
-
-            <UsersOfRoom users={roomUsers} />
-
-            <div className='border w-full h-full flex-1  flex items-center justify-center'>
-
-
-                <canvas height={innerHeight} width={innerWidth} id='canvas' ref={canvaRef} className=' bg-black ' />
-            </div>
+                    >
+                        {elem.icon}
+                        <p className='text-[12px] absolute bottom-0 right-2'>{elem.keyBind}</p>
+                    </span>
+                ))
+            }
 
         </div>
+
+        <UsersOfRoom users={roomUsers} />
+
+           {
+            roomUsers.map((user)=>(
+               <CurstomCursor key={user.userId} cursorPosition={cursorPosition} data={user.email} whichUser={whichUserDrawing}/>
+            ))
+        }
+        <div className='border w-full h-full flex-1  flex items-center justify-center'>
+
+
+            <canvas height={innerHeight} width={innerWidth} id='canvas' ref={canvaRef} className=' bg-black ' />
+        </div>
+
+    </div>
+
 
     )
 }

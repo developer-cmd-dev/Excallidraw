@@ -49,7 +49,7 @@ wss.on('connection', async (ws, req) => {
                 getUser(rooms, message.roomCode, ws); // get users from the room
 
             } else if (message.type === 'message') {
-                sendMessage(rooms,message.roomCode,user,message.data); // send message
+                sendMessage(rooms,message.roomCode,user,message); // send message
             }       
         })
 

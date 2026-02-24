@@ -5,6 +5,8 @@ import { Ellipse } from "./Ellipse";
 import { Line } from "./Line";
 import axios, { AxiosError } from "axios";
 import { CanvasSchema } from "@repo/common/types.ts";
+import { getSocket } from "../lib/websocket";
+import { number } from "motion/react";
 
 
 
@@ -27,7 +29,18 @@ let canvasObj: HTMLCanvasElement;
 let rcObj: RoughCanvas;
 let redoShapeArray: Shapes[] = [];
 
-export function initDraw(rc: RoughCanvas, canvas: HTMLCanvasElement, access_token: string, canvasId: string, drawing?: string[]): Shapes[] {
+export function initDraw(
+    rc: RoughCanvas,
+    canvas: HTMLCanvasElement,
+    access_token: string,
+    canvasId: string,
+    isCollabrative:{
+        roomCode:string
+    }|null
+): Shapes[] {
+
+
+
     let rectObj: Rectangle;
     let ellipseObj: Ellipse;
     let lineObj: Line;
@@ -70,20 +83,24 @@ export function initDraw(rc: RoughCanvas, canvas: HTMLCanvasElement, access_toke
             }
         };
 
+        if(isCollabrative){
+            websocketOperation(isCollabrative.roomCode,e)
+        }
+
     })
 
     canvas.addEventListener('mouseup', (e) => {
         if (rectObj && drawingType == 'rec') {
             shape.push(rectObj)
-        saveCanvas(access_token, canvasId);
+            saveCanvas(access_token, canvasId);
 
         } else if (ellipseObj && drawingType == 'circle') {
             shape.push(ellipseObj)
-        saveCanvas(access_token, canvasId);
+            saveCanvas(access_token, canvasId);
 
         } else if (lineObj && drawingType == 'line') {
             shape.push(lineObj)
-        saveCanvas(access_token, canvasId);
+            saveCanvas(access_token, canvasId);
 
         }
         clicked = false
@@ -99,24 +116,24 @@ export function initDraw(rc: RoughCanvas, canvas: HTMLCanvasElement, access_toke
 
 
 export function renderExistingCanvas(savedDrawing: string[]) {
-    shape=[]
+    shape = []
     savedDrawing.forEach((data) => {
         const drawingData = JSON.parse(data);
         if (drawingData.type === 'rect') {
             const rectangle = new Rectangle(drawingData.x, drawingData.y, rcObj);
             rectangle.modifyRect(drawingData.width, drawingData.height);
             shape.push(rectangle)
-        }else if(drawingData.type ==='circle'){
-            const ellipse = new Ellipse(drawingData.x,drawingData.y,rcObj);
-            ellipse.modifyEllipse(drawingData.width,drawingData.height);
+        } else if (drawingData.type === 'circle') {
+            const ellipse = new Ellipse(drawingData.x, drawingData.y, rcObj);
+            ellipse.modifyEllipse(drawingData.width, drawingData.height);
             shape.push(ellipse)
-        }else if(drawingData.type ==='line'){
-            const line = new Line(drawingData.x1,drawingData.y1,drawingData.x2,drawingData.y2,rcObj);
+        } else if (drawingData.type === 'line') {
+            const line = new Line(drawingData.x1, drawingData.y1, drawingData.x2, drawingData.y2, rcObj);
             shape.push(line)
         }
     })
     renderCanvas(canvasObj, rcObj, shape)
-    
+
 
 }
 
@@ -168,14 +185,14 @@ async function saveCanvas(token: string, canvasId: string) {
 
             if (lastElement instanceof Rectangle) {
                 axiosOperation(token, canvasId, lastElement.toJson())
-            }else if(lastElement instanceof Ellipse){
-                axiosOperation(token,canvasId,lastElement.toJson())
-            }else if(lastElement instanceof Line){
-                axiosOperation(token,canvasId,lastElement.toJson())
+            } else if (lastElement instanceof Ellipse) {
+                axiosOperation(token, canvasId, lastElement.toJson())
+            } else if (lastElement instanceof Line) {
+                axiosOperation(token, canvasId, lastElement.toJson())
             }
         }
     } catch (error) {
-       return error
+        return error
     }
 }
 
@@ -191,3 +208,29 @@ async function axiosOperation(token: string, canvasId: string, data: object) {
 
 
 
+
+export function websocketOperation(roomCode:string,e:MouseEvent){
+
+  const socket = getSocket()
+
+  if(socket && socket.readyState===WebSocket.OPEN){
+
+    socket.send(JSON.stringify(
+        {
+            type:'message',
+            roomCode,
+            data:{
+                cursorPosition:{
+                    x:e.clientX,
+                    y:e.clientY
+                }
+            }
+        }
+    ))
+
+  }
+
+
+
+
+}

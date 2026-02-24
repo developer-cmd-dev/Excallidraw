@@ -89,45 +89,39 @@ export function joinRoom(roomCode: string, rooms: Map<string, Room>, ws: WebSock
         }
 
 
-       const checkUser= getRoom.users.filter((x)=>x.email===user.email)
-       if(checkUser && checkUser.length>0){
-        getRoom.users.forEach((data)=>{
-            if(data.email === user.email && data.socket==null){
-                data.socket=ws;
-                data.active=true
-                data.setRoomId(roomCode);
-            }
+       const checkUser= getRoom.users.filter((x)=>x.email===user.email);
 
-        })
 
-        getRoom.users.forEach((data)=>{
-            if(data.email!=user.email && data.socket){
-                data.socket.send(JSON.stringify({
-                    type:'active-status',
-                    data:getRoom.users.map((data)=>data.toJson())
-                }))
+       if(checkUser[0]?.email===user.email){
+
+         getRoom.users.forEach((x)=>{
+            if(x.email===user.email){
+                x.active=true;
+                x.socket=ws;
             }
         })
+
 
        }else{
-        
-        getRoom?.setUser(user);
         user.setRoomId(roomCode);
-        getRoom?.users.forEach((data) => {
-            if (data.email != user.email) {
-               if(data.socket){
-                data.socket.send(JSON.stringify(
-                    {
-                        type: 'emit-message',
-                        data: user.toJson()
-                    }
-                ))
-               }
-
-            }
-        })
+        getRoom?.setUser(user);
+       
        }
 
+
+       getRoom?.users.forEach((data) => {
+        if (data.email != user.email) {
+           if(data.socket){
+            data.socket.send(JSON.stringify(
+                {
+                    type: 'emit-message',
+                    data: user.toJson()
+                }
+            ))
+           }
+
+        }
+    })
        
         ws.send(JSON.stringify({
             type: 'join-room',
@@ -156,13 +150,14 @@ export function getUser(rooms: Map<string, Room>, roomCode: string, ws: WebSocke
 }
 
 
-export function sendMessage(rooms: Map<string, Room>, roomCode: string, user: User, data: string) {
+export function sendMessage(rooms: Map<string, Room>, roomCode: string, user: User, data: object) {
+    
     const getRoom = rooms.get(roomCode);
     if (getRoom) {
         getRoom.users.forEach((users) => {
-            if (users !== user) {
+            if (users.email !== user.email) {
                 if(users.socket){
-                    users.socket.send(data);
+                    users.socket.send(JSON.stringify({...data,email:user.email}));
                 }
             }
         })
@@ -216,7 +211,6 @@ export async function closeConnection(roomObj:Room|null,rooms:Map<string,Room>,u
                     }
                 })
 
-                console.log(getRoom, 'from left joined user')
             }
         }
     }
