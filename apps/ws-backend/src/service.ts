@@ -1,7 +1,7 @@
 import { WebSocket } from "ws";
 import Room from "./Room";
 import User from "./User";
-import { prisma } from "@repo/db/prisma.ts";
+import { prisma } from "@repo/db/prisma";
 import "dotenv/config"
 
 
