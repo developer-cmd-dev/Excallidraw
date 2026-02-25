@@ -34,7 +34,7 @@ wss.on('connection', async (ws, req) => {
 
     if (user) {
         let roomObj: Room | null = null;
-        ws.on('message', async (data) => {
+        ws.on('message', async (data:WebSocket) => {
             const message = JSON.parse(data.toString());
             if (message.type === 'create-room') {
                 const data =await createRoom(message.roomCode, user, rooms, ws) // create room functions

@@ -404,7 +404,12 @@ app.post('/join-room', authMiddleware, async (req, res) => {
                 },
             )
 
-            if(room &&!room?.active){
+            if(!room){
+                res.status(404).json("Invalid room Code");
+                return
+            }
+
+            if(!room?.active){
                 res.status(400).json("Room is Offline");
                 return
             }
@@ -422,7 +427,6 @@ app.post('/join-room', authMiddleware, async (req, res) => {
                 }
                ) 
 
-               console.log(user)
             }
 
             return room;
