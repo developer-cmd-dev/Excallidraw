@@ -41,9 +41,9 @@ export function initDraw(
 
 
 
-    let rectObj: Rectangle;
-    let ellipseObj: Ellipse;
-    let lineObj: Line;
+    let rectObj: Rectangle|null;
+    let ellipseObj: Ellipse|null;
+    let lineObj: Line|null;
     let clicked = false;
     canvasObj = canvas;
     rcObj = rc;
@@ -81,10 +81,11 @@ export function initDraw(
                 renderCanvas(canvas, rc, shape);
                 lineObj.modifyLine(x2, y2);
             }
+     
         };
 
         if(isCollabrative){
-            websocketOperation(isCollabrative.roomCode,e)
+            websocketOperation(isCollabrative.roomCode,e,rectObj,ellipseObj,lineObj)
         }
 
     })
@@ -93,15 +94,17 @@ export function initDraw(
         if (rectObj && drawingType == 'rec') {
             shape.push(rectObj)
             saveCanvas(access_token, canvasId);
+            rectObj=null;
 
         } else if (ellipseObj && drawingType == 'circle') {
             shape.push(ellipseObj)
             saveCanvas(access_token, canvasId);
+            ellipseObj=null;
 
         } else if (lineObj && drawingType == 'line') {
             shape.push(lineObj)
             saveCanvas(access_token, canvasId);
-
+            lineObj=null;
         }
         clicked = false
 
@@ -206,15 +209,47 @@ async function axiosOperation(token: string, canvasId: string, data: object) {
     }
 }
 
+let cache:Rectangle|Ellipse|Line|null=null;
+
+export function socketShapesRender(data:object){
+   
+    const drawingData=data as{type:'rect',x:number,y:number,width:number,height:number};
+    if(drawingData===null){
+        if(cache!=null){
+            shape.push(cache)
+            cache=null;
+        }
+    }else{
+      if(drawingData.type=='rect'){
+        renderCanvas(canvasObj,rcObj,shape)
+        const rectObj = new Rectangle(drawingData.x,drawingData.y,rcObj);
+        rectObj.modifyRect(drawingData.width,drawingData.height)
+      }
+    }
+}
 
 
 
-export function websocketOperation(roomCode:string,e:MouseEvent){
+
+
+
+export function websocketOperation(roomCode:string,e:MouseEvent,recObj:Rectangle|null,ellipseObj:Ellipse|null,lineObj:Line|null){
 
   const socket = getSocket()
+    let drawingData:object|null=null;
+
+    if(recObj){
+        drawingData=recObj.toJson()
+    }else if(ellipseObj){
+        drawingData=ellipseObj.toJson()
+    }else if(lineObj){
+        drawingData=lineObj.toJson();
+    }else{
+        drawingData=null
+    }
+
 
   if(socket && socket.readyState===WebSocket.OPEN){
-
     socket.send(JSON.stringify(
         {
             type:'message',
@@ -223,7 +258,9 @@ export function websocketOperation(roomCode:string,e:MouseEvent){
                 cursorPosition:{
                     x:e.clientX,
                     y:e.clientY
-                }
+                },
+                drawing:drawingData
+                
             }
         }
     ))

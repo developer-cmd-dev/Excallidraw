@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useRef, useState, } from 'react'
 import { Circle, ConstructionIcon, Diamond, Minus, MoveRight, RectangleHorizontal, } from 'lucide-react'
 import rough from 'roughjs'
 import axios, { Axios, AxiosError } from 'axios';
-import { initDraw, redo, renderExistingCanvas, ShapesType, undo, websocketOperation } from '../draw/drawingLogic'
+import { initDraw, redo, renderExistingCanvas, ShapesType, socketShapesRender, undo, websocketOperation } from '../draw/drawingLogic'
 import { handleType } from '../draw/drawingLogic';
 import { ActiveStatus, AuthUserPayload, CreateRoom, EmitMessage, JoinRoom, SocketErrorMessage, SocketUser, WebSocketMessage } from '@repo/common/types.ts';
 import { useParams, useRouter } from 'next/navigation';
@@ -102,7 +102,6 @@ function Canvas({ authData }: Props) {
         async function socketHandler() {
             const socket = await connectSocket(authData.access_token)
             setWs(socket);
-            sendLiveEventMessage(socket,roomCode)
             
                 if (eventType) {
                     if (eventType == 'owner') {
@@ -136,8 +135,15 @@ function Canvas({ authData }: Props) {
                     }
                     else if (parseMessage.type == 'emit-message') {
                         const data = parseMessage.data as SocketUser;
-                        console.log(data)
-                        setRoomUsers((prev) => [...prev, data])
+                        setRoomUsers((prev): SocketUser[] => {
+                            const existingIndex = prev.findIndex((x) => x.email === data.email);
+                            if (existingIndex !== -1) {
+                                const updated = [...prev];
+                                updated[existingIndex] = { ...updated[existingIndex], active: true };
+                                return updated;
+                            }
+                            return [...prev, data];
+                        });
                     } else if (parseMessage.type == 'error') {
                         const data = parseMessage.data as SocketErrorMessage;
                         toast.error(data.message);
@@ -148,6 +154,9 @@ function Canvas({ authData }: Props) {
                         console.log(data)
                         setRoomUsers(data)
                     }else if(parseMessage.type==='message'){
+                       //@ts-ignore
+                       socketShapesRender(parseMessage.data.drawing)
+
                         //@ts-ignore
                         setCursorPosition(parseMessage.data.cursorPosition)
                         //@ts-ignore
@@ -168,10 +177,6 @@ function Canvas({ authData }: Props) {
         socket.send(JSON.stringify(data))
     }
 
-
-    function sendLiveEventMessage(socket:WebSocket,roomCode:string){
-            console.log(getSocket())
-    }
 
 
 
@@ -269,7 +274,8 @@ function Canvas({ authData }: Props) {
 
            {
             roomUsers.map((user)=>(
-               <CurstomCursor key={user.userId} cursorPosition={cursorPosition} data={user.email} whichUser={whichUserDrawing}/>
+              whichUserDrawing === user.email && <CurstomCursor key={user.userId} cursorPosition={cursorPosition} data={user.email} />
+                
             ))
         }
         <div className='border w-full h-full flex-1  flex items-center justify-center'>
