@@ -3,12 +3,12 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  "type":"module",
+  "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "generate": "prisma generate"
   },
   "exports": {
-    "./prisma.ts": "./src/prisma.ts"
+    "./prisma": "./src/prisma.ts"
   },
   "keywords": [],
   "author": "",
@@ -16,11 +16,11 @@
   "dependencies": {
     "@prisma/adapter-pg": "^7.3.0",
     "@prisma/client": "^7.3.0",
-    "dotenv": "^17.2.3",
-    "prisma": "^7.3.0"
+    "dotenv": "^17.2.3"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
-    "@types/node": "^25.0.10"
+    "@types/node": "^25.0.10",
+    "prisma": "^7.4.1"
   }
 }

@@ -4,7 +4,7 @@ import { JWT_SECRET } from "@repo/backend-common/config.ts";
 import { authMiddleware } from './middleware.js';
 
 import { CreateUserZodSchema, SignUpUser } from '@repo/common/types.ts';
-import { prisma } from '@repo/db/prisma.ts';
+import { prisma } from '@repo/db/prisma';
 import bycrypt, { hash } from 'bcrypt';
 import bodyparser from 'body-parser';
 import 'dotenv/config';

@@ -4,7 +4,6 @@ import jwt, { JsonWebTokenError, JwtPayload, TokenExpiredError } from 'jsonwebto
 import { JWT_SECRET } from '@repo/backend-common/config.ts';
 import User from './User';
 import Room from './Room';
-import { prisma } from '@repo/db/prisma.ts';
 import { URL } from 'url'
 import { doesNotMatch } from 'assert';
 import { closeConnection, createRoom, getUser, joinRoom, sendMessage } from './service';
