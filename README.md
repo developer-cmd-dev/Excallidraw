@@ -1,135 +1,124 @@
-# Turborepo starter
+# Excallidraw - Collaborative Whiteboard
 
-This Turborepo starter is maintained by the Turborepo core team.
+Excallidraw is a real-time, collaborative whiteboarding application that brings the hand-drawn feel to digital sketching. Built with a modern full-stack architecture, it allows multiple users to draw, share, and collaborate in real-time within persistent rooms.
 
-## Using this example
+![App Preview](apps/web/public/FullAppLogo.png)
 
-Run the following command:
+## 🚀 Key Features
 
-```sh
-npx create-turbo@latest
+- **Hand-Drawn Aesthetics**: Uses [RoughJS](https://roughjs.com/) to give sketches a natural, hand-drawn look.
+- **Real-time Collaboration**: Live drawing updates and cursor tracking for all users in a room using WebSockets.
+- **Room Management**: Create private drawing rooms or join existing ones with unique codes.
+- **Persistent Storage**: All drawings are saved to a PostgreSQL database via Prisma ORM.
+- **Multi-Shape Support**: Draw rectangles, ellipses, and lines with ease.
+- **Undo/Redo**: Robust state management for correcting mistakes during sketching.
+- **Secure Authentication**: Supports both traditional Email/Password login and Google OAuth via NextAuth.
+- **Optimized Performance**: Redis caching for fast data retrieval and debounced database updates for smooth drawing persistence.
+
+## 🛠️ Tech Stack
+
+### Frontend
+- **Framework**: [Next.js 16](https://nextjs.org/) (App Router)
+- **Styling**: [Tailwind CSS 4](https://tailwindcss.com/)
+- **Canvas Rendering**: [RoughJS](https://roughjs.com/)
+- **State Management**: [Zustand](https://docs.pmnd.rs/zustand/getting-started/introduction)
+- **Authentication**: [NextAuth.js](https://next-auth.js.org/)
+- **Icons**: [Lucide React](https://lucide.dev/)
+
+### Backend
+- **HTTP API**: [Express](https://expressjs.com/)
+- **WebSocket Server**: [ws](https://github.com/websockets/ws)
+- **Database**: [PostgreSQL](https://www.postgresql.org/) with [Prisma ORM](https://www.prisma.io/)
+- **Caching**: [Redis](https://redis.io/)
+- **Validation**: [Zod](https://zod.dev/)
+
+### Monorepo Tools
+- **Build System**: [Turborepo](https://turbo.build/)
+- **Package Manager**: [pnpm](https://pnpm.io/)
+
+## 📂 Project Structure
+
+```text
+├── apps/
+│   ├── web/             # Next.js frontend application
+│   ├── http-backend/     # Express HTTP server (Auth, CRUD)
+│   └── ws-backend/       # WebSocket server (Real-time events)
+├── packages/
+│   ├── db/              # Shared Prisma schema and client
+│   ├── common/          # Shared Zod schemas and TypeScript types
+│   ├── backend-common/   # Shared backend utilities (Redis, Config)
+│   ├── ui/              # Shared React component library
+│   ├── eslint-config/   # Shared ESLint configurations
+│   └── typescript-config/# Shared TSConfig files
 ```
 
-## What's inside?
+## ⚙️ Getting Started
 
-This Turborepo includes the following packages/apps:
+### Prerequisites
 
-### Apps and Packages
+- **Node.js**: v18 or later
+- **pnpm**: `npm install -g pnpm`
+- **PostgreSQL**: Local or hosted instance
+- **Redis**: Local or hosted instance
 
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
+### Installation
 
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
+1. Clone the repository:
+   ```bash
+   git clone <repository-url>
+   cd excallidraw
+   ```
 
-### Utilities
+2. Install dependencies:
+   ```bash
+   pnpm install
+   ```
 
-This Turborepo has some additional tools already setup for you:
+3. Set up environment variables:
+   Create `.env` files in the respective directories based on your environment.
 
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
+   **Root / Backend (`apps/http-backend/.env` & `apps/ws-backend/.env`):**
+   ```env
+   DATABASE_URL="postgresql://user:password@localhost:5432/excallidraw"
+   JWT_SECRET="your_jwt_secret"
+   REDIS_URL="redis://localhost:6379"
+   ```
 
-### Build
+   **Frontend (`apps/web/.env`):**
+   ```env
+   NEXT_BACKEND_URL="http://localhost:3001"
+   NEXTAUTH_SECRET="your_nextauth_secret"
+   NEXT_GOOGLE_CLIENT_ID="your_google_client_id"
+   NEXT_GOOGLE_CLIENT_SECRET="your_google_client_secret"
+   ```
 
-To build all apps and packages, run the following command:
+4. Generate Prisma Client:
+   ```bash
+   pnpm run generate --filter=@repo/db
+   ```
 
-```
-cd my-turborepo
+5. Push Database Schema:
+   ```bash
+   cd packages/db
+   npx prisma db push
+   ```
 
-# With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended)
-turbo build
+### Running the Project
 
-# Without [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation), use your package manager
-npx turbo build
-yarn dlx turbo build
-pnpm exec turbo build
-```
+To start all services (web, http-backend, ws-backend) in development mode:
 
-You can build a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
-
-```
-# With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended)
-turbo build --filter=docs
-
-# Without [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation), use your package manager
-npx turbo build --filter=docs
-yarn exec turbo build --filter=docs
-pnpm exec turbo build --filter=docs
-```
-
-### Develop
-
-To develop all apps and packages, run the following command:
-
-```
-cd my-turborepo
-
-# With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended)
-turbo dev
-
-# Without [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation), use your package manager
-npx turbo dev
-yarn exec turbo dev
-pnpm exec turbo dev
+```bash
+pnpm run dev
 ```
 
-You can develop a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
+- **Web Frontend**: [http://localhost:3000](http://localhost:3000)
+- **HTTP Backend**: [http://localhost:3001](http://localhost:3001)
+- **WS Backend**: `ws://localhost:8080`
 
-```
-# With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended)
-turbo dev --filter=web
+## 🤝 Contributing
 
-# Without [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation), use your package manager
-npx turbo dev --filter=web
-yarn exec turbo dev --filter=web
-pnpm exec turbo dev --filter=web
-```
+Contributions are welcome! Please feel free to submit a Pull Request.
 
-### Remote Caching
+## 📄 License
 
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
-
-Turborepo can use a technique known as [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
-
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
-
-```
-cd my-turborepo
-
-# With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended)
-turbo login
-
-# Without [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation), use your package manager
-npx turbo login
-yarn exec turbo login
-pnpm exec turbo login
-```
-
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
-
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
-
-```
-# With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended)
-turbo link
-
-# Without [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation), use your package manager
-npx turbo link
-yarn exec turbo link
-pnpm exec turbo link
-```
-
-## Useful Links
-
-Learn more about the power of Turborepo:
-
-- [Tasks](https://turborepo.dev/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.dev/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.dev/docs/reference/configuration)
-- [CLI Usage](https://turborepo.dev/docs/reference/command-line-reference)
+This project is licensed under the ISC License.
