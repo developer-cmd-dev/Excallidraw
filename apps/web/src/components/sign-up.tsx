@@ -30,6 +30,8 @@ export default function SignupForm({className}:Props) {
       toast.error("Invalid credentials format.");
     }
 
+    
+
     const response= await axios.post(`${BACKEND_URL}/signup`,{name,email,password});
     if(response.status){
       router.push('/signin')
